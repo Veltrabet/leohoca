@@ -43,10 +43,22 @@
     streamingText: document.getElementById('streamingText'),
     visualizer: document.getElementById('visualizer'),
     micBtn: document.getElementById('micBtn'),
+    sendBtn: document.getElementById('sendBtn'),
     textInput: document.getElementById('textInput'),
     hint: document.getElementById('hint'),
     langTabs: document.querySelectorAll('.lang-tab')
   };
+
+  function doSend() {
+    const text = elements.textInput?.value?.trim();
+    if (text) {
+      sendInterrupt();
+      stopSpeaking();
+      appendUser(text);
+      sendChat(text);
+      elements.textInput.value = '';
+    }
+  }
 
   function setStatus(text, state = '') {
     elements.status.className = 'status ' + state;
@@ -284,21 +296,13 @@
     });
   });
 
-  if (elements.textInput) {
-    elements.textInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        const text = elements.textInput.value.trim();
-        if (text) {
-          sendInterrupt();
-          stopSpeaking();
-          appendUser(text);
-          sendChat(text);
-          elements.textInput.value = '';
-        }
-      }
-    });
-  }
+  elements.sendBtn?.addEventListener('click', doSend);
+  elements.textInput?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      doSend();
+    }
+  });
 
   document.addEventListener('visibilitychange', () => {
     if (document.hidden && isListening) recognition?.stop();
