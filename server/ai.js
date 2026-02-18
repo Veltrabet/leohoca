@@ -47,7 +47,7 @@ function initAI() {
   return true;
 }
 
-function buildMessages(sessionId, userMessage) {
+function buildMessages(sessionId, userMessage, imageData) {
   const history = getConversationHistory(sessionId);
   const preferredLang = getPreferredLanguage(sessionId);
   let featureOverrides = '';
@@ -72,7 +72,7 @@ function buildMessages(sessionId, userMessage) {
     messages.push({ role: msg.role, content: msg.content });
   }
   
-  messages.push({ role: 'user', content: userMessage });
+  messages.push({ role: 'user', content: userMessage, image: imageData });
   
   return messages;
 }
@@ -126,8 +126,18 @@ async function streamWithGemini(messages, onChunk, onComplete) {
       parts: [{ text: m.content }]
     }));
 
+    let lastParts;
+    if (lastMsg.image) {
+      lastParts = [
+        { text: lastMsg.content || 'Çfarë shihni në këtë imazh?' },
+        { inlineData: { mimeType: lastMsg.image.mimeType || 'image/jpeg', data: lastMsg.image.base64 } }
+      ];
+    } else {
+      lastParts = [{ text: lastMsg.content }];
+    }
+
     const chat = model.startChat({ history });
-    const result = await chat.sendMessageStream(lastMsg.content);
+    const result = await chat.sendMessageStream(lastParts);
     let fullResponse = '';
     for await (const chunk of result.stream) {
       const text = chunk.text && chunk.text();
@@ -188,9 +198,17 @@ async function streamWithOllama(messages, onChunk, onComplete) {
 
 async function streamWithOpenAI(messages, onChunk, onComplete) {
   try {
+    const openAIMessages = messages.map((m) => {
+      if (m.role === 'user' && m.image) {
+        const parts = [{ type: 'text', text: m.content || 'What is in this image?' }];
+        parts.push({ type: 'image_url', image_url: { url: `data:${m.image.mimeType};base64,${m.image.base64}` } });
+        return { role: 'user', content: parts };
+      }
+      return { role: m.role, content: m.content };
+    });
     const stream = await openaiClient.chat.completions.create({
       model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
-      messages,
+      messages: openAIMessages,
       stream: true,
       max_tokens: 1000,
       temperature: 0.8
@@ -211,17 +229,23 @@ async function streamWithOpenAI(messages, onChunk, onComplete) {
   }
 }
 
-async function streamChat(sessionId, userMessage, onChunk, onComplete) {
+async function streamChat(sessionId, userMessage, imageData, onChunk, onComplete) {
   const detectedLang = detectLanguage(userMessage);
   setDetectedLanguage(sessionId, detectedLang);
-  addMessage(sessionId, 'user', userMessage);
+  addMessage(sessionId, 'user', userMessage + (imageData ? ' [imazh]' : ''));
 
-  const messages = buildMessages(sessionId, userMessage);
+  const messages = buildMessages(sessionId, userMessage, imageData);
 
   const done = (full) => {
     addMessage(sessionId, 'assistant', full);
     onComplete(full);
   };
+
+  if (imageData && aiProvider !== 'gemini' && aiProvider !== 'openai') {
+    onChunk(currentLang === 'sq-AL' ? 'Imazhet kërkojnë GEMINI_API_KEY.' : 'Resim için GEMINI_API_KEY gerekli.');
+    onComplete('');
+    return;
+  }
 
   if (aiProvider === 'groq') {
     await streamWithGroq(messages, onChunk, done);

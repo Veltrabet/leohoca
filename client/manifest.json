@@ -1,11 +1,11 @@
 {
   "name": "LeoGPT - AI Asistan",
   "short_name": "LeoGPT",
-  "description": "Zeka, ses, sohbet ve teknik destek. Türkçe ve Arnavutça. Kod, resim fikirleri, iş planı.",
+  "description": "© Leohoca. Asistent AI profesional — 100% Shqip.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0f0f1a",
-  "theme_color": "#1a1a2e",
+  "background_color": "#f8fafc",
+  "theme_color": "#1e40af",
   "orientation": "portrait-primary",
   "icons": [
     {

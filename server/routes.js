@@ -22,17 +22,27 @@ const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } }); // 5M
 
 // --- Auth ---
 router.post('/auth/register', (req, res) => {
-  const { email, password, name } = req.body || {};
-  const result = auth.register(email, password, name);
-  if (result.ok) res.json(result);
-  else res.status(400).json(result);
+  try {
+    const { email, password, name } = req.body || {};
+    const result = auth.register(email, password, name);
+    if (result.ok) res.json(result);
+    else res.status(400).json(result);
+  } catch (e) {
+    console.error('Register error:', e);
+    res.status(500).json({ ok: false, error: e.message || 'Sunucu hatası' });
+  }
 });
 
 router.post('/auth/login', (req, res) => {
-  const { email, password } = req.body || {};
-  const result = auth.login(email, password);
-  if (result.ok) res.json(result);
-  else res.status(401).json(result);
+  try {
+    const { email, password } = req.body || {};
+    const result = auth.login(email, password);
+    if (result.ok) res.json(result);
+    else res.status(401).json(result);
+  } catch (e) {
+    console.error('Login error:', e);
+    res.status(500).json({ ok: false, error: e.message || 'Sunucu hatası' });
+  }
 });
 
 router.get('/auth/me', auth.requireAuth, (req, res) => {
@@ -73,9 +83,13 @@ router.post('/feedback', (req, res) => {
 
 // --- Public config (özellik bayrakları) ---
 router.get('/config/public', (req, res) => {
+  const s = settings.getSettings();
+  const content = settings.getAppContent();
+  const logoUrl = content.find(c => c.key === 'logo_url')?.value || s.app_logo_url || '';
   res.json({
     features: settings.getFeatureFlags(),
-    content: settings.getAppContent()
+    content,
+    logoUrl
   });
 });
 

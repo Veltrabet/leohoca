@@ -127,3 +127,24 @@ Railway'de SQLite dosyası **kalıcı değildir** – her deploy'da sıfırlanı
 ### Railway'de çalışmıyor
 - Tüm Variables eklendi mi kontrol edin
 - Logs sekmesinden hata mesajlarına bakın
+
+---
+
+## 5. Son Kontrol Listesi (Deploy Öncesi)
+
+| Kontrol | Durum |
+|---------|-------|
+| `client/logo.png` mevcut | ✓ |
+| `server/.env` → GROQ_API_KEY veya GEMINI_API_KEY | ✓ |
+| Kayıt/giriş iptal — doğrudan sohbet | ✓ |
+| Arnavutça varsayılan dil (SQ) | ✓ |
+| Beyaz tema, profesyonel tasarım | ✓ |
+| © Leohoca telif — footer ve meta | ✓ |
+| Sesli komut (Chrome önerilir) | ✓ |
+| Resim yükleme (GEMINI_API_KEY gerekli) | ✓ |
+| PWA manifest — app olarak yükleme | ✓ |
+| protect.js — sağ tık, F12 engeli | ✓ |
+
+### Deploy sonrası
+- Logo görünüyor mu? → `/logo.png` route tanımlı
+- HTTPS ile çalışıyor mu? → Railway otomatik SSL

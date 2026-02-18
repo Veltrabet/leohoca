@@ -75,12 +75,11 @@
       </div>
 
       <div class="admin-section">
-        <h2>🖼 Uygulama İçeriği</h2>
-        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem">Logo URL, banner veya ek HTML ekleyebilirsiniz.</p>
+        <h2>🖼 Logo</h2>
+        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem">Uygulama logosu. Tam URL veya yüklediğiniz resmin yolu.</p>
         <div class="content-item">
-          <input type="text" id="contentKey" placeholder="Anahtar (örn: logo_url)" />
-          <input type="text" id="contentValue" placeholder="Değer veya URL" />
-          <button class="btn" id="addContent">Ekle</button>
+          <input type="text" id="logoUrl" placeholder="https://... veya /uploads/xxx.png" style="flex:2" />
+          <button class="btn" id="saveLogo">Logo Kaydet</button>
         </div>
         <div id="contentList" style="margin-top:1rem"></div>
       </div>
@@ -195,9 +194,9 @@
       }
 
       if (content.ok) {
-        document.getElementById('contentList').innerHTML = (content.content || []).map(c =>
-          `<div class="content-item"><input value="${c.key}" readonly style="max-width:120px" /><input value="${c.value}" readonly /><button onclick="delContent('${c.type}','${c.key}')">Sil</button></div>`
-        ).join('');
+        const logoItem = (content.content || []).find(c => c.key === 'logo_url');
+        const logoInput = document.getElementById('logoUrl');
+        if (logoInput) logoInput.value = logoItem?.value || set.settings?.app_logo_url || '';
       }
 
       if (users.ok) {
@@ -212,13 +211,12 @@
       loadData();
     }
 
-    document.getElementById('addContent')?.addEventListener('click', async () => {
-      const key = document.getElementById('contentKey').value.trim();
-      const value = document.getElementById('contentValue').value.trim();
-      if (!key) return;
-      await api('/api/admin/content', { method: 'POST', body: JSON.stringify({ type: 'custom', key, value }) });
-      document.getElementById('contentKey').value = '';
-      document.getElementById('contentValue').value = '';
+    document.getElementById('saveLogo')?.addEventListener('click', async () => {
+      const url = document.getElementById('logoUrl').value.trim();
+      if (!url) { alert('Logo URL girin'); return; }
+      await api('/api/admin/content', { method: 'POST', body: JSON.stringify({ type: 'custom', key: 'logo_url', value: url }) });
+      await api('/api/admin/settings', { method: 'PUT', body: JSON.stringify({ key: 'app_logo_url', value: url }) });
+      alert('Logo kaydedildi');
       loadData();
     });
 
@@ -233,8 +231,12 @@
         body: fd
       });
       const d = await r.json();
-      document.getElementById('uploadResult').textContent = d.ok ? 'Yüklendi: ' + d.url : (d.error || 'Hata');
-      if (d.ok) document.getElementById('fileUpload').value = '';
+      const resultEl = document.getElementById('uploadResult');
+      resultEl.textContent = d.ok ? 'Yüklendi: ' + d.url : (d.error || 'Hata');
+      if (d.ok) {
+        document.getElementById('fileUpload').value = '';
+        document.getElementById('logoUrl').value = d.url.startsWith('http') ? d.url : (BACKEND + d.url);
+      }
     });
 
     checkAuth();

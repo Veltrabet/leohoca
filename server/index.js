@@ -16,7 +16,7 @@ const cors = (req, res, next) => {
   const origin = req.headers.origin;
   res.setHeader('Access-Control-Allow-Origin', origin || '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.sendStatus(200);
   next();
 };
@@ -47,8 +47,20 @@ app.use(express.json());
 const routes = require('./routes');
 app.use('/api', routes);
 
-// Serve static client files
-app.use(express.static(path.join(__dirname, '../client')));
+// Serve static client files (client klasörü server'ın bir üst dizininde)
+const clientPath = path.join(__dirname, '..', 'client');
+app.use(express.static(clientPath));
+
+// Logo ve statik dosyalar (deploy uyumluluğu)
+app.get('/logo.png', (req, res) => {
+  res.sendFile(path.join(clientPath, 'logo.png'));
+});
+app.get('/admin.html', (req, res) => {
+  res.sendFile(path.join(clientPath, 'admin.html'));
+});
+app.get('/auth.html', (req, res) => {
+  res.sendFile(path.join(clientPath, 'auth.html'));
+});
 
 // API: Get persona and config
 app.get('/api/config', (req, res) => {
@@ -79,9 +91,9 @@ app.get('/api/greeting/:lang', (req, res) => {
   res.json({ greeting: ai.getGreeting(lang) });
 });
 
-// SPA fallback
+// SPA fallback - sadece tanınmayan path'ler için
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../client/index.html'));
+  res.sendFile(path.join(clientPath, 'index.html'));
 });
 
 // WebSocket server
@@ -104,7 +116,10 @@ wss.on('connection', (ws, req) => {
           break;
 
         case 'chat':
-          if (!msg.text || typeof msg.text !== 'string') {
+          const text = typeof msg.text === 'string' ? msg.text.trim() : '';
+          const image = msg.image;
+          const imageMime = msg.imageMime || 'image/jpeg';
+          if (!text && !image) {
             ws.send(JSON.stringify({ type: 'error', message: 'Invalid message' }));
             return;
           }
@@ -113,7 +128,8 @@ wss.on('connection', (ws, req) => {
 
           await ai.streamChat(
             sessionId,
-            msg.text.trim(),
+            text || (image ? 'Çfarë shihni në këtë imazh?' : ''),
+            image ? { base64: image, mimeType: imageMime } : null,
             (chunk) => {
               if (ws.readyState === 1) {
                 ws.send(JSON.stringify({ type: 'ai_chunk', content: chunk }));

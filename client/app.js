@@ -7,6 +7,9 @@
   'use strict';
 
   function getBackend() {
+    if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+      return location.origin;
+    }
     const fromConfig = (typeof LEOHOCA_BACKEND !== 'undefined' && LEOHOCA_BACKEND && String(LEOHOCA_BACKEND).trim())
       ? String(LEOHOCA_BACKEND).replace(/\/$/, '') : '';
     const fromStorage = localStorage.getItem('leohoca_backend') || '';
@@ -42,7 +45,8 @@
       micBtn: 'Mikrofon',
       wrongPassword: 'Yanlış şifre',
       connectionError: 'Bağlantı hatası',
-      invalidUrl: 'Geçerli bir URL girin (https:// ile başlamalı)'
+      invalidUrl: 'Geçerli bir URL girin (https:// ile başlamalı)',
+      imgBtn: 'Resim ekle'
     },
     'sq-AL': {
       statusConnecting: 'Duke u lidhur',
@@ -51,14 +55,15 @@
       statusError: 'Gabim në lidhje',
       errorPrefix: 'Gabim: ',
       listening: 'Po dëgjoj... Fol.',
-      hint: 'TR = Turqisht, SQ = Shqip — flet në gjuhën e zgjedhur',
+      hint: 'Shkruani ose folni me mikrofon — zgjidhni TR/SQ',
       inputPlaceholder: 'Shkruani mesazhin tuaj...',
       hintInput: 'Shkruani ose folni me mikrofon — zgjidhni TR/SQ',
       emptyTitle: 'Bisedoni me LeoGPT',
       emptyDesc: 'Shkruani më poshtë dhe shtypni Dërgo ose folni me mikrofon',
-      tagline: 'Si shoku juaj këtu',
+      tagline: 'Asistenti juaj AI profesional — 100% Shqip',
       sendBtn: 'Dërgo',
       micBtn: 'Mikrofon',
+      imgBtn: 'Ngjitni imazh',
       wrongPassword: 'Fjalëkalim i gabuar',
       connectionError: 'Gabim në lidhje',
       invalidUrl: 'Vendosni një URL të vlefshme (duhet të fillojë me https://)'
@@ -66,15 +71,15 @@
   };
 
   function t(key) {
-    return (UI[currentLang] || UI['tr-TR'])[key] || UI['tr-TR'][key];
+    return (UI[currentLang] || UI['sq-AL'])[key] || UI['sq-AL'][key];
   }
 
   function updateEmptyState() {
     const hasContent = elements.transcript?.children?.length > 0 || (elements.streamingText?.textContent || '').trim().length > 0;
     if (elements.emptyState) {
       elements.emptyState.classList.toggle('hidden', !!hasContent);
-      const title = elements.emptyState.querySelector('.empty-title');
-      const desc = elements.emptyState.querySelector('.empty-desc');
+      const title = elements.emptyState?.querySelector('.empty-title');
+      const desc = elements.emptyState?.querySelector('.empty-desc');
       if (title) title.textContent = t('emptyTitle');
       if (desc) desc.textContent = t('emptyDesc');
     }
@@ -93,6 +98,10 @@
     if (elements.micBtn) {
       elements.micBtn.setAttribute('aria-label', t('micBtn'));
       elements.micBtn.setAttribute('title', t('micBtn'));
+    }
+    if (elements.imgBtn) {
+      elements.imgBtn.setAttribute('aria-label', t('imgBtn'));
+      elements.imgBtn.setAttribute('title', t('imgBtn'));
     }
     if (elements.statusText) {
       if (elements.status?.classList?.contains('connected')) elements.statusText.textContent = t('statusConnected');
@@ -122,6 +131,8 @@
     visualizer: document.getElementById('visualizer'),
     micBtn: document.getElementById('micBtn'),
     sendBtn: document.getElementById('sendBtn'),
+    imgBtn: document.getElementById('imgBtn'),
+    imageInput: document.getElementById('imageInput'),
     textInput: document.getElementById('textInput'),
     hint: document.getElementById('hint'),
     langTabs: document.querySelectorAll('.lang-tab'),
@@ -214,10 +225,14 @@
     }
   }
 
-  function sendChat(text) {
-    if (ws && ws.readyState === WebSocket.OPEN && text.trim()) {
-      ws.send(JSON.stringify({ type: 'chat', text: text.trim() }));
-    }
+  function sendChat(text, imageBase64, imageMime) {
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    const hasText = text && text.trim();
+    const hasImage = imageBase64 && imageMime;
+    if (!hasText && !hasImage) return;
+    const msg = { type: 'chat', text: (text || '').trim() };
+    if (hasImage) { msg.image = imageBase64; msg.imageMime = imageMime; }
+    ws.send(JSON.stringify(msg));
   }
 
   function sendInterrupt() {
@@ -226,10 +241,13 @@
     }
   }
 
-  function appendUser(text) {
+  function appendUser(text, imageDataUrl) {
     const div = document.createElement('div');
     div.className = 'msg user';
-    div.innerHTML = '<div class="msg-avatar">S</div><div class="msg-content">' + escapeHtml(text) + '</div>';
+    let content = '';
+    if (imageDataUrl) content += '<div class="msg-image"><img src="' + imageDataUrl + '" alt="Imazh" /></div>';
+    if (text) content += '<div class="msg-content">' + escapeHtml(text) + '</div>';
+    div.innerHTML = '<div class="msg-avatar">S</div><div class="msg-body">' + (content || '<div class="msg-content">—</div>') + '</div>';
     elements.transcript.appendChild(div);
     elements.transcript.scrollTop = elements.transcript.scrollHeight;
     updateEmptyState();
@@ -277,6 +295,8 @@
     }
   }
 
+  let speechFallbackLang = null;
+
   function initSpeechRecognition() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
@@ -287,7 +307,7 @@
     recognition = new SpeechRecognition();
     recognition.continuous = true;
     recognition.interimResults = true;
-    recognition.lang = currentLang;
+    recognition.lang = speechFallbackLang || currentLang;
 
     recognition.onstart = () => {
       isListening = true;
@@ -305,12 +325,10 @@
 
     recognition.onresult = (e) => {
       let final = '';
-      let interim = '';
       for (let i = e.resultIndex; i < e.results.length; i++) {
         const r = e.results[i];
-        const t = r[0].transcript;
-        if (r.isFinal) final += t;
-        else interim += t;
+        const txt = r[0].transcript;
+        if (r.isFinal) final += txt;
       }
       if (final) {
         userInterrupted = true;
@@ -322,9 +340,17 @@
     };
 
     recognition.onerror = (e) => {
-      if (e.error !== 'no-speech' && e.error !== 'aborted') {
-        console.error('Speech recognition error:', e.error);
+      if (e.error === 'no-speech' || e.error === 'aborted') return;
+      if (e.error === 'not-allowed') {
+        elements.hint.textContent = currentLang === 'sq-AL' ? 'Lejoni mikrofonin në cilësimet e shfletuesit.' : 'Tarayıcı ayarlarından mikrofon iznini verin.';
+        return;
       }
+      if ((e.error === 'language-not-supported' || e.error === 'network') && currentLang === 'sq-AL' && !speechFallbackLang) {
+        speechFallbackLang = 'en-US';
+        elements.hint.textContent = 'Folni në shqip ose anglisht — AI do të përgjigjet në shqip. Klikoni mikrofonin përsëri.';
+        return;
+      }
+      console.error('Speech recognition error:', e.error);
     };
 
     return true;
@@ -338,7 +364,8 @@
     if (isListening) {
       recognition.stop();
     } else {
-      recognition.lang = currentLang;
+      const lang = speechFallbackLang || currentLang;
+      recognition.lang = lang;
       recognition.start();
     }
   }
@@ -413,6 +440,26 @@
     });
   });
 
+  elements.imgBtn?.addEventListener('click', () => elements.imageInput?.click());
+  elements.imageInput?.addEventListener('change', (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file || !file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result;
+      const base64 = dataUrl.split(',')[1];
+      const mime = file.type;
+      const text = elements.textInput?.value?.trim() || (currentLang === 'sq-AL' ? 'Çfarë shihni në këtë imazh?' : 'Bu resimde ne var?');
+      sendInterrupt();
+      stopSpeaking();
+      appendUser(text, dataUrl);
+      sendChat(text, base64, mime);
+      elements.textInput.value = '';
+    };
+    reader.readAsDataURL(file);
+  });
+
   elements.sendBtn?.addEventListener('click', doSend);
   elements.textInput?.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -427,6 +474,8 @@
 
   synthesis.addEventListener('voiceschanged', () => synthesis.getVoices());
 
+  const authOverlay = document.getElementById('authOverlay');
+  const mainApp = document.getElementById('mainApp');
   const passwordOverlay = document.getElementById('passwordOverlay');
   const passwordInput = document.getElementById('passwordInput');
   const passwordSubmit = document.getElementById('passwordSubmit');
@@ -434,96 +483,83 @@
   const setupOverlay = document.getElementById('setupOverlay');
   const backendInput = document.getElementById('backendUrl');
   const saveBtn = document.getElementById('saveBackend');
-  const userLink = document.getElementById('userLink');
-  const userName = document.getElementById('userName');
+  const userBadge = document.getElementById('userBadge');
   const logoutBtn = document.getElementById('logoutBtn');
 
   function updateUserUI() {
     const user = JSON.parse(localStorage.getItem('leogpt_user') || 'null');
     const adminLink = document.getElementById('adminLink');
     if (user && user.email) {
-      if (userLink) userLink.style.display = 'none';
-      if (userName) { userName.textContent = user.email; userName.style.display = 'inline'; }
+      if (userBadge) { userBadge.textContent = user.email; userBadge.style.display = 'inline'; }
       if (logoutBtn) logoutBtn.style.display = 'inline';
       if (adminLink) adminLink.style.display = user.is_admin ? 'inline' : 'none';
     } else {
-      if (userLink) { userLink.style.display = 'inline'; userLink.textContent = currentLang === 'sq-AL' ? 'Hyr' : 'Giriş'; }
-      if (userName) userName.style.display = 'none';
+      if (userBadge) userBadge.style.display = 'none';
       if (logoutBtn) logoutBtn.style.display = 'none';
       if (adminLink) adminLink.style.display = 'none';
     }
   }
+
+  function showMainApp() {
+    authOverlay?.style && (authOverlay.style.display = 'none');
+    passwordOverlay.style.display = 'none';
+    setupOverlay.style.display = 'none';
+    mainApp.style.display = 'flex';
+    updateUI();
+    updateUserUI();
+    connect();
+  }
+
   logoutBtn?.addEventListener('click', () => {
+    if (ws) { ws.close(); ws = null; }
     localStorage.removeItem('leogpt_token');
     localStorage.removeItem('leogpt_user');
     updateUserUI();
   });
 
-  function showApp() {
-    passwordOverlay.style.display = 'none';
-    setupOverlay.style.display = 'none';
-    updateUI();
-    updateUserUI();
-    if (needsSetup()) {
-      setupOverlay.style.display = 'flex';
-    } else {
-      connect();
-    }
-  }
-
   function initApp() {
-    if (sessionStorage.getItem('leohoca_auth') === '1') {
-      showApp();
+    if (needsSetup()) {
+      authOverlay?.style && (authOverlay.style.display = 'none');
+      setupOverlay.style.display = 'flex';
+      saveBtn?.addEventListener('click', () => {
+        const url = (backendInput?.value || '').trim().replace(/\/$/, '');
+        if (!url || (!url.startsWith('https://') && !url.startsWith('http://'))) {
+          alert(t('invalidUrl'));
+          return;
+        }
+        localStorage.setItem('leohoca_backend', url);
+        location.reload();
+      });
       return;
     }
-    fetch(BACKEND + '/api/auth/required')
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.required) {
-          passwordOverlay.style.display = 'flex';
-          passwordSubmit?.addEventListener('click', () => {
-            const pwd = passwordInput?.value || '';
-            passwordError.textContent = '';
-            fetch(BACKEND + '/api/auth', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ password: pwd })
-            })
-              .then((r) => r.json())
-              .then((data) => {
-                if (data.ok) {
-                  sessionStorage.setItem('leohoca_auth', '1');
-                  showApp();
-                } else {
-                  passwordError.textContent = t('wrongPassword');
-                }
-              })
-              .catch(() => { passwordError.textContent = t('connectionError'); });
-          });
-          passwordInput?.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') passwordSubmit?.click();
-          });
-        } else {
-          showApp();
-        }
-      })
-      .catch(() => showApp());
+    fetch(BACKEND + '/api/config/public').then(r => r.json()).catch(() => ({})).then(config => {
+      const logoUrl = config.logoUrl || config.content?.find(c => c.key === 'logo_url')?.value || '';
+      const img = document.getElementById('appLogo');
+      const fallback = document.getElementById('logoFallback');
+      if (logoUrl && img) {
+        img.src = logoUrl.startsWith('http') ? logoUrl : BACKEND + logoUrl;
+      }
+      if (img) img.onerror = () => { img.style.display = 'none'; if (fallback) fallback.style.display = 'flex'; };
+    });
+    fetch(BACKEND + '/api/auth/required').then(r => r.json()).then(d => {
+      if (d.required) {
+        authOverlay?.style && (authOverlay.style.display = 'none');
+        passwordOverlay.style.display = 'flex';
+        passwordSubmit?.addEventListener('click', () => {
+          const pwd = passwordInput?.value || '';
+          passwordError.textContent = '';
+          fetch(BACKEND + '/api/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: pwd }) })
+            .then(r => r.json()).then(data => {
+              if (data.ok) { sessionStorage.setItem('leohoca_auth', '1'); showMainApp(); }
+              else passwordError.textContent = t('wrongPassword');
+            }).catch(() => { passwordError.textContent = t('connectionError'); });
+        });
+        passwordInput?.addEventListener('keydown', (e) => { if (e.key === 'Enter') passwordSubmit?.click(); });
+      } else showMainApp();
+    }).catch(() => showMainApp());
   }
 
-  if (needsSetup()) {
-    setupOverlay.style.display = 'flex';
-    saveBtn?.addEventListener('click', () => {
-      const url = (backendInput?.value || '').trim().replace(/\/$/, '');
-      if (!url || (!url.startsWith('https://') && !url.startsWith('http://'))) {
-        alert(t('invalidUrl'));
-        return;
-      }
-      localStorage.setItem('leohoca_backend', url);
-      location.reload();
-    });
-  } else {
-    initApp();
-  }
+  initApp();
 
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(() => {});

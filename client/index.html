@@ -1,58 +1,53 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="sq">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#0c1222">
-  <meta name="description" content="LeoGPT - Zeka, ses, sohbet ve teknik destek özellikli yapay zeka asistanı">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>LeoGPT - AI Asistan</title>
+  <meta name="theme-color" content="#f8fafc">
+  <meta name="description" content="LeoGPT - AI Asistan. © Leohoca — Të gjitha të drejtat e rezervuara.">
+    <meta name="author" content="Leohoca">
+  <title>LeoGPT</title>
   <link rel="manifest" href="manifest.json">
-  <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <script src="config.js"></script>
 </head>
 <body>
+  <!-- App password overlay (LEOHOCA_PASSWORD) -->
   <div id="passwordOverlay" class="overlay" style="display:none">
     <div class="overlay-box">
       <h2>LeoGPT</h2>
-      <p>Erişim için şifre girin</p>
-      <input type="password" id="passwordInput" placeholder="Şifre" autocomplete="off" />
+      <p id="passwordPrompt">Vendosni fjalëkalimin për akses</p>
+      <input type="password" id="passwordInput" placeholder="Fjalëkalimi" autocomplete="off" />
       <p class="error-msg" id="passwordError"></p>
-      <button id="passwordSubmit">Giriş</button>
+      <button id="passwordSubmit">Hyr</button>
     </div>
   </div>
+
+  <!-- Setup overlay -->
   <div id="setupOverlay" class="overlay" style="display:none">
     <div class="overlay-box">
-      <h2>LeoGPT Kurulum</h2>
-      <p>Backend bağlantısı için Railway URL'si gerekli.</p>
-      <ol class="setup-steps">
-        <li><a href="https://railway.app" target="_blank">railway.app</a> → GitHub ile deploy edin</li>
-        <li>Variables → <code>GROQ_API_KEY</code> ekleyin</li>
-        <li>Generate Domain → URL'yi kopyalayın</li>
-      </ol>
+      <h2>LeoGPT — Konfigurim</h2>
+      <p>URL e backend-it kërkohet.</p>
       <input type="url" id="backendUrl" placeholder="https://xxx.up.railway.app" />
-      <button id="saveBackend">Kaydet ve Başlat</button>
+      <button id="saveBackend">Ruaj</button>
     </div>
   </div>
-  <div class="app">
+
+  <!-- Ana uygulama -->
+  <div class="app" id="mainApp" style="display:none">
     <header class="header">
       <div class="logo">
-        <div class="logo-avatar">L</div>
+        <img id="appLogo" class="logo-img" src="/logo.png" alt="LeoGPT" />
+        <div class="logo-avatar" id="logoFallback" title="Logo" style="display:none">L</div>
         <div>
           <h1>LeoGPT</h1>
-          <span class="tagline">Si shoku juaj këtu</span>
+          <span class="tagline" id="tagline">Asistenti juaj AI profesional — 100% Shqip</span>
         </div>
       </div>
       <div class="header-right">
-        <a href="admin.html" class="user-link admin-link" id="adminLink" style="display:none">Admin</a>
-        <a href="auth.html" class="user-link" id="userLink">Hyr</a>
-        <span class="user-name" id="userName" style="display:none"></span>
-        <button class="logout-btn" id="logoutBtn" style="display:none" title="Dilni">✕</button>
+        <a href="admin.html" class="header-link admin-link" id="adminLink" style="display:none">Admin</a>
+        <span class="user-badge" id="userBadge"></span>
+        <button class="icon-btn logout-btn" id="logoutBtn" style="display:none" title="Dilni">✕</button>
         <div class="lang-tabs">
           <button class="lang-tab" data-lang="tr-TR">TR</button>
           <button class="lang-tab active" data-lang="sq-AL">SQ</button>
@@ -69,42 +64,36 @@
         <div class="chat-messages" id="transcript"></div>
         <div class="streaming-bubble" id="streamingText"></div>
         <div class="empty-state" id="emptyState">
-          <div class="empty-icon">💬</div>
           <p class="empty-title">Bisedoni me LeoGPT</p>
-          <p class="empty-desc">Shkruani më poshtë dhe shtypni Dërgo ose folni me mikrofon</p>
+          <p class="empty-desc">Shkruani ose folni me mikrofon</p>
         </div>
       </div>
 
       <div class="voice-visualizer" id="visualizer" aria-hidden="true">
-        <div class="viz-bar"></div>
-        <div class="viz-bar"></div>
-        <div class="viz-bar"></div>
-        <div class="viz-bar"></div>
-        <div class="viz-bar"></div>
+        <div class="viz-bar"></div><div class="viz-bar"></div><div class="viz-bar"></div><div class="viz-bar"></div><div class="viz-bar"></div>
       </div>
 
       <div class="input-area">
         <div class="input-row">
+          <input type="file" id="imageInput" accept="image/*" capture="environment" style="display:none" />
           <input type="text" id="textInput" placeholder="Shkruani mesazhin tuaj..." autocomplete="off" />
-          <button class="send-btn" id="sendBtn" aria-label="Gönder" title="Gönder">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
-            </svg>
+          <button class="img-btn" id="imgBtn" aria-label="Imazh" title="Ngjitni imazh">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
           </button>
-          <button class="mic-btn" id="micBtn" aria-label="Konuş" title="Mikrofon">
-            <svg class="mic-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
-              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-              <line x1="12" y1="19" x2="12" y2="23"/>
-              <line x1="8" y1="23" x2="16" y2="23"/>
-            </svg>
+          <button class="send-btn" id="sendBtn" aria-label="Dërgo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+          </button>
+          <button class="mic-btn" id="micBtn" aria-label="Mikrofon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
           </button>
         </div>
         <p class="hint" id="hint">Shkruani ose folni me mikrofon — zgjidhni TR/SQ</p>
+        <p class="copyright">© Leohoca — Të gjitha të drejtat e rezervuara.</p>
       </div>
     </main>
   </div>
 
+  <script src="protect.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
