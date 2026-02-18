@@ -3,95 +3,193 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#f8fafc">
+  <meta name="theme-color" content="#ffffff">
   <meta name="description" content="LeoGPT - AI Asistan. © Leohoca — Të gjitha të drejtat e rezervuara.">
-    <meta name="author" content="Leohoca">
+  <meta name="author" content="Leohoca">
   <title>LeoGPT</title>
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="styles.css">
   <script src="config.js"></script>
 </head>
-<body>
-  <!-- App password overlay (LEOHOCA_PASSWORD) -->
+<body class="theme-light">
+  <!-- App password overlay -->
   <div id="passwordOverlay" class="overlay" style="display:none">
-    <div class="overlay-box">
+    <div class="overlay-box glass">
       <h2>LeoGPT</h2>
       <p id="passwordPrompt">Vendosni fjalëkalimin për akses</p>
       <input type="password" id="passwordInput" placeholder="Fjalëkalimi" autocomplete="off" />
       <p class="error-msg" id="passwordError"></p>
-      <button id="passwordSubmit">Hyr</button>
+      <button id="passwordSubmit" class="btn-primary">Hyr</button>
     </div>
   </div>
 
   <!-- Setup overlay -->
   <div id="setupOverlay" class="overlay" style="display:none">
-    <div class="overlay-box">
+    <div class="overlay-box glass">
       <h2>LeoGPT — Konfigurim</h2>
       <p>URL e backend-it kërkohet.</p>
       <input type="url" id="backendUrl" placeholder="https://xxx.up.railway.app" />
-      <button id="saveBackend">Ruaj</button>
+      <button id="saveBackend" class="btn-primary">Ruaj</button>
     </div>
   </div>
 
-  <!-- Ana uygulama -->
-  <div class="app" id="mainApp" style="display:none">
-    <header class="header">
-      <div class="logo">
-        <img id="appLogo" class="logo-img" src="/logo.png" alt="LeoGPT" />
-        <div class="logo-avatar" id="logoFallback" title="Logo" style="display:none">L</div>
-        <div>
-          <h1>LeoGPT</h1>
-          <span class="tagline" id="tagline">Asistenti juaj AI profesional — 100% Shqip</span>
-        </div>
+  <!-- Main App -->
+  <div class="app-layout" id="mainApp" style="display:none">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <img id="appLogo" class="sidebar-logo" src="/logo.png" alt="LeoGPT" />
+        <div class="logo-fallback" id="logoFallback" style="display:none">L</div>
+        <h1 class="sidebar-title">LeoGPT</h1>
       </div>
-      <div class="header-right">
-        <a href="admin.html" class="header-link admin-link" id="adminLink" style="display:none">Admin</a>
-        <span class="user-badge" id="userBadge"></span>
-        <button class="icon-btn logout-btn" id="logoutBtn" style="display:none" title="Dilni">✕</button>
-        <button class="icon-btn voice-toggle" id="voiceToggle" title="Dëgjoni përgjigjen" aria-label="Zë">🔊</button>
-        <div class="lang-tabs">
-          <button class="lang-tab" data-lang="tr-TR">TR</button>
-          <button class="lang-tab active" data-lang="sq-AL">SQ</button>
-        </div>
-        <div class="status" id="status">
-          <span class="status-dot"></span>
-          <span class="status-text">Duke u lidhur</span>
-        </div>
+      <nav class="sidebar-nav">
+        <button class="nav-item nav-item-primary" id="newChatBtn" data-action="new-chat">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></span>
+          <span class="nav-label" data-i18n="newChat">Bisedë e re</span>
+        </button>
+        <button class="nav-item" id="searchChatsBtn" data-action="search">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></span>
+          <span class="nav-label" data-i18n="searchChats">Kërko bisedat</span>
+        </button>
+        <button class="nav-item" id="imagesBtn" data-action="images">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></span>
+          <span class="nav-label" data-i18n="images">Imazhet</span>
+        </button>
+        <button class="nav-item" id="applicationsBtn" data-action="applications">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></span>
+          <span class="nav-label" data-i18n="applications">Aplikacionet</span>
+        </button>
+        <button class="nav-item" id="codexBtn" data-action="codex">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="18" rx="2"/><path d="M6 9h6"/><path d="M6 13h10"/></svg></span>
+          <span class="nav-label">Codex</span>
+        </button>
+        <button class="nav-item" id="projectsBtn" data-action="projects">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg></span>
+          <span class="nav-label" data-i18n="projects">Projektet</span>
+        </button>
+      </nav>
+      <div class="chat-history" id="chatHistory">
+        <div class="history-placeholder" id="historyPlaceholder">Sesioni aktual</div>
       </div>
-    </header>
-
-    <main class="main">
-      <div class="chat-container">
-        <div class="chat-messages" id="transcript"></div>
-        <div class="streaming-bubble" id="streamingText"></div>
-        <div class="empty-state" id="emptyState">
-          <p class="empty-title">Bisedoni me LeoGPT</p>
-          <p class="empty-desc">Shkruani ose folni me mikrofon</p>
-        </div>
-      </div>
-
-      <div class="voice-visualizer" id="visualizer" aria-hidden="true">
-        <div class="viz-bar"></div><div class="viz-bar"></div><div class="viz-bar"></div><div class="viz-bar"></div><div class="viz-bar"></div>
-      </div>
-
-      <div class="input-area">
-        <div class="input-row">
-          <input type="file" id="imageInput" accept="image/*" capture="environment" style="display:none" />
-          <input type="text" id="textInput" placeholder="Shkruani mesazhin tuaj..." autocomplete="off" />
-          <button class="img-btn" id="imgBtn" aria-label="Imazh" title="Ngjitni imazh">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      <div class="sidebar-footer">
+        <div class="settings-group">
+          <button class="sidebar-btn voice-toggle" id="voiceToggle" title="Zë">
+            <span class="icon">🔊</span>
           </button>
-          <button class="send-btn" id="sendBtn" aria-label="Dërgo">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
-          </button>
-          <button class="mic-btn" id="micBtn" aria-label="Mikrofon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-          </button>
+          <a href="admin.html" class="sidebar-btn admin-link" id="adminLink" style="display:none">Admin</a>
         </div>
-        <p class="hint" id="hint">Shkruani ose folni me mikrofon — zgjidhni TR/SQ</p>
-        <p class="copyright">© Leohoca — Të gjitha të drejtat e rezervuara.</p>
+        <p class="copyright">© Leohoca</p>
       </div>
-    </main>
+    </aside>
+
+    <!-- Main content -->
+    <div class="main-wrapper">
+      <!-- Header -->
+      <header class="header glass">
+        <button class="icon-btn sidebar-toggle" id="sidebarToggle" aria-label="Menu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <div class="header-center">
+          <select class="model-select" id="modelSelect">
+            <option value="leogpt">LeoGPT</option>
+          </select>
+        </div>
+        <div class="header-right">
+          <button class="icon-btn theme-toggle" id="themeToggle" aria-label="Tema">
+            <span class="theme-icon">🌙</span>
+          </button>
+          <div class="status" id="status">
+            <span class="status-dot"></span>
+            <span class="status-text">Duke u lidhur</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Chat area -->
+      <main class="chat-main">
+        <div class="chat-container" id="chatContainer">
+          <div class="chat-messages" id="transcript"></div>
+          <div class="typing-indicator" id="typingIndicator" style="display:none">
+            <div class="typing-dots"><span></span><span></span><span></span></div>
+            <span class="typing-text" id="typingText">LeoGPT po shkruan...</span>
+          </div>
+          <div class="streaming-msg" id="streamingMsg" style="display:none">
+            <div class="msg ai">
+              <div class="msg-avatar">L</div>
+              <div class="msg-body">
+                <div class="streaming-bubble" id="streamingText"></div>
+              </div>
+            </div>
+          </div>
+          <div class="empty-state" id="emptyState">
+            <div class="empty-icon">💬</div>
+            <p class="empty-title">Chat with LeoGPT</p>
+            <p class="empty-desc">Write in any language — I'll respond in the same language</p>
+            <div class="suggestions" id="suggestions"></div>
+          </div>
+          <button class="scroll-to-bottom" id="scrollToBottom" aria-label="Scroll to bottom" style="display:none">↓</button>
+        </div>
+
+        <div class="voice-visualizer" id="visualizer" aria-hidden="true">
+          <div class="viz-bar"></div><div class="viz-bar"></div><div class="viz-bar"></div><div class="viz-bar"></div><div class="viz-bar"></div>
+        </div>
+
+        <div class="input-area">
+          <div class="input-row glass">
+            <input type="file" id="imageInput" accept="image/*" style="display:none" />
+            <input type="text" id="textInput" placeholder="Type your message in any language..." autocomplete="off" />
+            <button class="img-btn" id="imgBtn" aria-label="Imazh" title="Ngjitni imazh">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+            </button>
+            <button class="send-btn" id="sendBtn" aria-label="Dërgo">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+            </button>
+            <button class="mic-btn" id="micBtn" aria-label="Mikrofon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+            </button>
+          </div>
+          <p class="hint" id="hint">Write in any language — I'll respond in the same language</p>
+        </div>
+      </main>
+    </div>
+
+    <!-- Sidebar overlay (mobile) -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Search overlay -->
+    <div class="panel-overlay" id="searchOverlay">
+      <div class="panel search-panel">
+        <div class="panel-header">
+          <h3 data-i18n="searchChats">Kërko bisedat</h3>
+          <button class="panel-close" id="searchClose" aria-label="Close">×</button>
+        </div>
+        <input type="text" class="panel-input" id="searchInput" placeholder="" />
+        <div class="search-results" id="searchResults"></div>
+      </div>
+    </div>
+
+    <!-- Applications overlay -->
+    <div class="panel-overlay" id="applicationsOverlay">
+      <div class="panel applications-panel">
+        <div class="panel-header">
+          <h3 data-i18n="applications">Aplikacionet</h3>
+          <button class="panel-close" id="applicationsClose" aria-label="Close">×</button>
+        </div>
+        <div class="apps-grid" id="appsGrid"></div>
+      </div>
+    </div>
+
+    <!-- Projects overlay -->
+    <div class="panel-overlay" id="projectsOverlay">
+      <div class="panel projects-panel">
+        <div class="panel-header">
+          <h3 data-i18n="projects">Projektet</h3>
+          <button class="panel-close" id="projectsClose" aria-label="Close">×</button>
+        </div>
+        <button class="btn-save-project" id="saveProjectBtn" data-i18n="saveProject">Ruaj këtë bisedë</button>
+        <div class="projects-list" id="projectsList"></div>
+      </div>
+    </div>
   </div>
 
   <script src="protect.js"></script>

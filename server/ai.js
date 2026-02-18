@@ -49,7 +49,6 @@ function initAI() {
 
 function buildMessages(sessionId, userMessage, imageData) {
   const history = getConversationHistory(sessionId);
-  const preferredLang = getPreferredLanguage(sessionId);
   let featureOverrides = '';
   try {
     const settings = require('./settings');
@@ -61,7 +60,7 @@ function buildMessages(sessionId, userMessage, imageData) {
   } catch (_) {}
   
   const systemPrompt = persona.systemPrompt + 
-    `\n\nÖNEMLİ: Kullanıcı ${preferredLang === 'sq-AL' ? 'Arnavutça' : 'Türkçe'} seçti. SADECE ${preferredLang === 'sq-AL' ? 'Arnavutça' : 'Türkçe'} cevap ver.${preferredLang === 'sq-AL' ? ' Arnavutça gramer, yazım ve ifade kusursuz olsun.' : ''}` + featureOverrides;
+    `\n\nÖNEMLİ - DİL: Kullanıcı hangi dilde yazarsa O DİLDE cevap ver. Türkçe yazdıysa Türkçe, Arnavutça yazdıysa Arnavutça, İngilizce yazdıysa İngilizce, vs. Mesajın dilini otomatik algıla ve aynı dilde yanıtla. Ana dil seçimi yok - her zaman kullanıcının yazdığı dilde cevap ver.` + featureOverrides;
   
   const messages = [
     { role: 'system', content: systemPrompt }
@@ -78,14 +77,18 @@ function buildMessages(sessionId, userMessage, imageData) {
 }
 
 function detectLanguage(text) {
-  if (!text || !text.trim()) return 'tr-TR';
-  const t = text.trim();
-  const turkishIndicators = /[ğüşıöçĞÜŞİÖÇ]|merhaba|teşekkür|nasıl|var mı|yok mu|evet|hayır|için|ile|bunu|şu|bunlar|türkçe|neden|ne zaman|nerede|kim|hangi|bana|yardım|lütfen|olur mu|olabilir mi|yapabilir|bilir misin|söyler misin|açıklar mısın/i;
-  const albanianIndicators = /[ë]|përshëndetje|faleminderit|si jeni|si je|po|jo|për|me|ky|kjo|ato|shqip|shqiptar|pse|kur|ku|kush|cila|më ndihmo|ju lutem|mund të|a mund|a dini|a më thoni|a më shpjegoni|mirëmëngjes|mirëdita|natën e mirë|leogpt|shkruani|bisedoni|dërgo|zgjidhni/i;
+  if (!text || !text.trim()) return 'en';
+  const t = text.trim().toLowerCase();
+  const turkishIndicators = /[ğüşıöç]|merhaba|teşekkür|nasıl|var mı|yok mu|evet|hayır|için|ile|bunu|şu|bunlar|türkçe|neden|ne zaman|nerede|kim|hangi|bana|yardım|lütfen|olur mu|olabilir mi|yapabilir|bilir misin|söyler misin|açıklar mısın/i;
+  const albanianIndicators = /[ë]|përshëndetje|faleminderit|si jeni|si je|po |jo |për |me |ky |kjo |ato |shqip|shqiptar|pse |kur |ku |kush |cila |më ndihmo|ju lutem|mund të|a mund|a dini|a më thoni|a më shpjegoni|mirëmëngjes|mirëdita|natën e mirë|leogpt|shkruani|bisedoni|dërgo|zgjidhni/i;
+  const englishIndicators = /\b(the|and|is|are|was|were|have|has|had|will|would|could|should|what|when|where|who|why|how|hello|thanks|please|help|can you|would you)\b/i;
   const albanianScore = (t.match(albanianIndicators) || []).length;
   const turkishScore = (t.match(turkishIndicators) || []).length;
-  if (albanianScore > turkishScore) return 'sq-AL';
-  return 'tr-TR';
+  const englishScore = (t.match(englishIndicators) || []).length;
+  if (albanianScore > turkishScore && albanianScore >= englishScore) return 'sq-AL';
+  if (turkishScore > albanianScore && turkishScore >= englishScore) return 'tr-TR';
+  if (englishScore > 0 || /^[a-z\s.,!?']+$/i.test(t.substring(0, 80))) return 'en-US';
+  return albanianScore >= turkishScore ? 'sq-AL' : 'tr-TR';
 }
 
 async function streamWithGroq(messages, onChunk, onComplete) {
@@ -243,7 +246,7 @@ async function streamChat(sessionId, userMessage, imageData, onChunk, onComplete
   };
 
   if (imageData && aiProvider !== 'gemini' && aiProvider !== 'openai') {
-    onChunk(currentLang === 'sq-AL' ? 'Imazhet kërkojnë GEMINI_API_KEY.' : 'Resim için GEMINI_API_KEY gerekli.');
+    onChunk('Images require GEMINI_API_KEY or OPENAI_API_KEY.');
     onComplete('');
     return;
   }
@@ -262,8 +265,8 @@ async function streamChat(sessionId, userMessage, imageData, onChunk, onComplete
   }
 }
 
-function getGreeting(lang = 'tr-TR') {
-  return persona.greeting[lang] || persona.greeting['tr-TR'];
+function getGreeting() {
+  return 'Hello! I\'m LeoGPT. Write in any language — I\'ll respond in the same language. How can I help?';
 }
 
 module.exports = {

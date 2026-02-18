@@ -28,6 +28,38 @@
   const LANGUAGES = { 'tr-TR': 'tr-TR', 'sq-AL': 'sq-AL' };
 
   const UI = {
+    'en': {
+      statusConnecting: 'Connecting',
+      statusConnected: 'Connected',
+      statusReconnecting: 'Reconnecting...',
+      statusError: 'Connection error',
+      errorPrefix: 'Error: ',
+      listening: 'Listening... Speak now.',
+      hint: 'Write in any language — I\'ll respond in the same language',
+      inputPlaceholder: 'Type your message in any language...',
+      hintInput: 'Write in any language — I\'ll respond in the same language',
+      emptyTitle: 'Chat with LeoGPT',
+      emptyDesc: 'Write in any language — I\'ll respond in the same language',
+      typingText: 'LeoGPT is typing...',
+      newChat: 'New chat',
+      searchChats: 'Search chats',
+      searchPlaceholder: 'Search in messages...',
+      searchNoResults: 'No results found',
+      images: 'Images',
+      applications: 'Applications',
+      saveProject: 'Save this chat',
+      projects: 'Projects',
+      sendBtn: 'Send',
+      micBtn: 'Microphone',
+      imgBtn: 'Add image',
+      copyBtn: 'Copy',
+      copied: 'Copied!',
+      listen: 'Listen',
+      wrongPassword: 'Wrong password',
+      connectionError: 'Connection error',
+      invalidUrl: 'Enter a valid URL (must start with https://)',
+      speechNotSupported: 'Speech recognition not supported. Try Chrome.'
+    },
     'tr-TR': {
       statusConnecting: 'Bağlanıyor',
       statusConnected: 'Bağlı',
@@ -35,18 +67,31 @@
       statusError: 'Bağlantı hatası',
       errorPrefix: 'Hata: ',
       listening: 'Dinliyorum... Konuşun.',
-      hint: 'TR = Türkçe, SQ = Arnavutça — seçtiğin dilde konuşur',
+      hint: 'Herhangi bir dilde yaz — aynı dilde cevap veririm',
       inputPlaceholder: 'Mesajını yaz...',
-      hintInput: 'Yaz veya mikrofonla konuş — TR/SQ dil seç',
+      hintInput: 'Herhangi bir dilde yaz — aynı dilde cevap veririm',
       emptyTitle: 'LeoGPT ile sohbet et',
       emptyDesc: 'Mesajını yazıp Gönder\'e bas veya mikrofonla konuş',
+      typingText: 'LeoGPT yazıyor...',
       tagline: 'Arkadaşın gibi burada',
+      newChat: 'Yeni sohbet',
+      searchChats: 'Sohbetleri ara',
+      searchPlaceholder: 'Mesajlarda ara...',
+      searchNoResults: 'Sonuç bulunamadı',
+      images: 'Görseller',
+      applications: 'Uygulamalar',
+      saveProject: 'Bu sohbeti kaydet',
+      projects: 'Projeler',
       sendBtn: 'Gönder',
       micBtn: 'Mikrofon',
       wrongPassword: 'Yanlış şifre',
       connectionError: 'Bağlantı hatası',
       invalidUrl: 'Geçerli bir URL girin (https:// ile başlamalı)',
-      imgBtn: 'Resim ekle'
+      imgBtn: 'Resim ekle',
+      copyBtn: 'Kopyala',
+      copied: 'Kopyalandı!',
+      listen: 'Dinle',
+      speechNotSupported: 'Ses tanıma desteklenmiyor. Chrome kullanın.'
     },
     'sq-AL': {
       statusConnecting: 'Duke u lidhur',
@@ -55,42 +100,94 @@
       statusError: 'Gabim në lidhje',
       errorPrefix: 'Gabim: ',
       listening: 'Po dëgjoj... Fol.',
-      hint: 'Shkruani ose folni me mikrofon — zgjidhni TR/SQ',
+      hint: 'Shkruani në çdo gjuhë — përgjigjem në të njëjtën gjuhë',
       inputPlaceholder: 'Shkruani mesazhin tuaj...',
-      hintInput: 'Shkruani ose folni me mikrofon — zgjidhni TR/SQ',
+      hintInput: 'Shkruani në çdo gjuhë — përgjigjem në të njëjtën gjuhë',
       emptyTitle: 'Bisedoni me LeoGPT',
       emptyDesc: 'Shkruani më poshtë dhe shtypni Dërgo ose folni me mikrofon',
+      typingText: 'LeoGPT po shkruan...',
       tagline: 'Asistenti juaj AI profesional — 100% Shqip',
+      newChat: 'Bisedë e re',
+      searchChats: 'Kërko bisedat',
+      searchPlaceholder: 'Kërko në mesazhe...',
+      searchNoResults: 'Nuk u gjet asgjë',
+      images: 'Imazhet',
+      applications: 'Aplikacionet',
+      saveProject: 'Ruaj këtë bisedë',
+      projects: 'Projektet',
       sendBtn: 'Dërgo',
       micBtn: 'Mikrofon',
       imgBtn: 'Ngjitni imazh',
       wrongPassword: 'Fjalëkalim i gabuar',
       connectionError: 'Gabim në lidhje',
-      invalidUrl: 'Vendosni një URL të vlefshme (duhet të fillojë me https://)'
+      invalidUrl: 'Vendosni një URL të vlefshme (duhet të fillojë me https://)',
+      copyBtn: 'Kopjo',
+      copied: 'U kopjua!',
+      listen: 'Dëgjoni',
+      speechNotSupported: 'Njohja e zërit nuk mbështetet. Provoni Chrome.'
     }
   };
 
-  function t(key) {
-    return (UI[currentLang] || UI['sq-AL'])[key] || UI['sq-AL'][key];
+  function getUILang() {
+    const nav = (navigator.language || navigator.userLanguage || 'en').toLowerCase();
+    if (nav.startsWith('tr')) return 'tr-TR';
+    if (nav.startsWith('sq')) return 'sq-AL';
+    return 'en';
   }
 
+  const uiLang = getUILang();
+
+  function t(key) {
+    return (UI[uiLang] || UI['en'])[key] || UI['en'][key];
+  }
+
+  const SUGGESTIONS = [
+    'Hello! How can you help me?',
+    'Explain quantum computing simply',
+    'Write a short poem',
+    'What can you do?'
+  ];
+
+  const APPS = [
+    { id: 'summarize', tr: 'Özetle', sq: 'Përmblidh', en: 'Summarize', prompt: { tr: 'Özetle: ', sq: 'Përmblidh: ', en: 'Summarize: ' } },
+    { id: 'translate', tr: 'Çevir', sq: 'Përkthe', en: 'Translate', prompt: { tr: 'Türkçeye çevir: ', sq: 'Përkthe në shqip: ', en: 'Translate to my language: ' } },
+    { id: 'explain', tr: 'Açıkla', sq: 'Shpjego', en: 'Explain', prompt: { tr: 'Açıkla: ', sq: 'Shpjego: ', en: 'Explain: ' } },
+    { id: 'expand', tr: 'Genişlet', sq: 'Zgjeroh', en: 'Expand', prompt: { tr: 'Genişlet: ', sq: 'Zgjeroh: ', en: 'Expand: ' } },
+    { id: 'simplify', tr: 'Basitleştir', sq: 'Thjeshteso', en: 'Simplify', prompt: { tr: 'Basitleştir: ', sq: 'Thjeshteso: ', en: 'Simplify: ' } }
+  ];
+
+  const CODEX_PROMPT = { tr: 'Şu konuda kod yaz: ', sq: 'Shkruaj kod për: ', en: 'Write code for: ' };
+
   function updateEmptyState() {
-    const hasContent = elements.transcript?.children?.length > 0 || (elements.streamingText?.textContent || '').trim().length > 0;
+    const hasTranscript = elements.transcript?.children?.length > 0;
+    const hasStreaming = (elements.streamingText?.textContent || '').trim().length > 0;
+    const hasTyping = elements.typingIndicator?.style?.display !== 'none';
+    const hasContent = hasTranscript || hasStreaming || hasTyping;
     if (elements.emptyState) {
       elements.emptyState.classList.toggle('hidden', !!hasContent);
       const title = elements.emptyState?.querySelector('.empty-title');
       const desc = elements.emptyState?.querySelector('.empty-desc');
       if (title) title.textContent = t('emptyTitle');
       if (desc) desc.textContent = t('emptyDesc');
+      const suggestionsEl = document.getElementById('suggestions');
+      if (suggestionsEl && !hasContent) {
+        suggestionsEl.innerHTML = SUGGESTIONS.map(s => '<button class="suggestion-chip">' + escapeHtml(s) + '</button>').join('');
+        suggestionsEl.querySelectorAll('.suggestion-chip').forEach((btn, i) => {
+          btn.addEventListener('click', () => {
+            elements.textInput.value = SUGGESTIONS[i];
+            elements.textInput.focus();
+          });
+        });
+      }
     }
   }
 
   function updateUI() {
     if (elements.hint) elements.hint.textContent = t('hintInput');
     if (elements.textInput) elements.textInput.placeholder = t('inputPlaceholder');
+    const typingEl = document.getElementById('typingText');
+    if (typingEl) typingEl.textContent = t('typingText');
     updateEmptyState();
-    const taglineEl = document.querySelector('.tagline');
-    if (taglineEl) taglineEl.textContent = t('tagline');
     if (elements.sendBtn) {
       elements.sendBtn.setAttribute('aria-label', t('sendBtn'));
       elements.sendBtn.setAttribute('title', t('sendBtn'));
@@ -103,6 +200,10 @@
       elements.imgBtn.setAttribute('aria-label', t('imgBtn'));
       elements.imgBtn.setAttribute('title', t('imgBtn'));
     }
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.dataset.i18n;
+      if (key && t(key)) el.textContent = t(key);
+    });
     if (elements.statusText) {
       if (elements.status?.classList?.contains('connected')) elements.statusText.textContent = t('statusConnected');
       else if (elements.status?.classList?.contains('error')) elements.statusText.textContent = t('statusError');
@@ -112,8 +213,7 @@
 
   let ws = null;
   let sessionId = null;
-  const savedLang = localStorage.getItem('leohoca_lang');
-  let currentLang = (savedLang === 'sq-AL' || savedLang === 'tr-TR') ? savedLang : 'sq-AL';
+  let lastDetectedLang = 'en-US';
   let recognition = null;
   let synthesis = window.speechSynthesis;
   synthesis.getVoices();
@@ -129,6 +229,8 @@
     statusText: document.querySelector('.status-text'),
     transcript: document.getElementById('transcript'),
     streamingText: document.getElementById('streamingText'),
+    streamingMsg: document.getElementById('streamingMsg'),
+    typingIndicator: document.getElementById('typingIndicator'),
     visualizer: document.getElementById('visualizer'),
     micBtn: document.getElementById('micBtn'),
     sendBtn: document.getElementById('sendBtn'),
@@ -136,9 +238,18 @@
     imageInput: document.getElementById('imageInput'),
     textInput: document.getElementById('textInput'),
     hint: document.getElementById('hint'),
-    langTabs: document.querySelectorAll('.lang-tab'),
     emptyState: document.getElementById('emptyState'),
-    voiceToggle: document.getElementById('voiceToggle')
+    voiceToggle: document.getElementById('voiceToggle'),
+    sidebarToggle: document.getElementById('sidebarToggle'),
+    sidebar: document.getElementById('sidebar'),
+    sidebarOverlay: document.getElementById('sidebarOverlay'),
+    themeToggle: document.getElementById('themeToggle'),
+    newChatBtn: document.getElementById('newChatBtn'),
+    searchChatsBtn: document.getElementById('searchChatsBtn'),
+    imagesBtn: document.getElementById('imagesBtn'),
+    applicationsBtn: document.getElementById('applicationsBtn'),
+    codexBtn: document.getElementById('codexBtn'),
+    projectsBtn: document.getElementById('projectsBtn')
   };
 
   function doSend() {
@@ -153,8 +264,8 @@
   }
 
   function setStatus(text, state = '') {
-    elements.status.className = 'status ' + state;
-    elements.statusText.textContent = text;
+    if (elements.status) elements.status.className = 'status ' + state;
+    if (elements.statusText) elements.statusText.textContent = text;
   }
 
   function connect() {
@@ -183,14 +294,11 @@
     switch (msg.type) {
       case 'connected':
         sessionId = msg.sessionId;
-        if (ws && ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({ type: 'set_language', lang: currentLang }));
-        }
         break;
       case 'greeting':
         if (msg.greeting) {
           appendAI(msg.greeting);
-          if (autoSpeak) speak(msg.greeting, currentLang);
+          if (autoSpeak) speak(msg.greeting, 'en-US');
         }
         break;
       case 'ai_start':
@@ -198,26 +306,34 @@
         streamedContent = '';
         elements.streamingText.textContent = '';
         elements.streamingText.classList.add('active');
+        if (elements.typingIndicator) elements.typingIndicator.style.display = 'flex';
+        if (elements.streamingMsg) elements.streamingMsg.style.display = 'none';
         stopSpeaking();
         updateEmptyState();
         break;
       case 'ai_chunk':
+        if (elements.typingIndicator) elements.typingIndicator.style.display = 'none';
+        if (elements.streamingMsg) elements.streamingMsg.style.display = 'flex';
         streamedContent += msg.content || '';
         elements.streamingText.textContent = streamedContent;
+        scrollChatToBottom();
         break;
       case 'ai_complete':
+        if (elements.typingIndicator) elements.typingIndicator.style.display = 'none';
+        if (elements.streamingMsg) elements.streamingMsg.style.display = 'none';
         elements.streamingText.textContent = '';
         elements.streamingText.classList.remove('active');
         const finalContent = streamedContent || msg.content || '';
+        lastDetectedLang = msg.language || lastDetectedLang;
         appendAI(finalContent, 'msg-' + Date.now());
-        if (autoSpeak && !userInterrupted && finalContent) speak(finalContent, currentLang);
+        if (autoSpeak && !userInterrupted && finalContent) speak(finalContent, lastDetectedLang);
         userInterrupted = false;
         break;
       case 'interrupt_ack':
         userInterrupted = true;
         break;
       case 'error':
-        appendAI(t('errorPrefix') + (msg.message || (currentLang === 'sq-AL' ? 'Gabim i panjohur.' : 'Bilinmeyen hata')));
+        appendAI(t('errorPrefix') + (msg.message || 'Unknown error'));
         setStatus(t('statusError'), 'error');
         break;
       default:
@@ -249,23 +365,49 @@
     if (text) content += '<div class="msg-content">' + escapeHtml(text) + '</div>';
     div.innerHTML = '<div class="msg-avatar">S</div><div class="msg-body">' + (content || '<div class="msg-content">—</div>') + '</div>';
     elements.transcript.appendChild(div);
-    elements.transcript.scrollTop = elements.transcript.scrollHeight;
+    scrollChatToBottom();
     updateEmptyState();
+  }
+
+  function scrollChatToBottom() {
+    const container = elements.transcript?.closest('.chat-container');
+    if (container) container.scrollTop = container.scrollHeight;
+    const sb = document.getElementById('scrollToBottom');
+    if (sb) sb.style.display = 'none';
+  }
+
+  function simpleMarkdown(text) {
+    let s = escapeHtml(text);
+    s = s.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+    s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+    s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    s = s.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+    s = s.replace(/\n/g, '<br>');
+    return s;
   }
 
   function appendAI(text, messageId) {
     const div = document.createElement('div');
     div.className = 'msg ai';
     div.dataset.messageId = messageId || 'msg-' + Date.now();
-    const playTitle = currentLang === 'sq-AL' ? 'Dëgjoni' : 'Dinle';
-    const feedbackHtml = '<div class="feedback-btns"><button class="feedback-btn play-btn" title="' + playTitle + '" aria-label="' + playTitle + '">🔊</button><button class="feedback-btn" data-rating="1" title="' + (currentLang === 'sq-AL' ? 'Më pëlqen' : 'Beğendim') + '">👍</button><button class="feedback-btn" data-rating="-1" title="' + (currentLang === 'sq-AL' ? 'Nuk më pëlqen' : 'Beğenmedim') + '">👎</button></div>';
-    div.innerHTML = '<div class="msg-avatar">L</div><div class="msg-body"><div class="msg-content">' + escapeHtml(text) + '</div>' + feedbackHtml + '</div>';
+    const playTitle = t('listen');
+    const copyTitle = t('copyBtn');
+    const feedbackHtml = '<div class="feedback-btns"><button class="feedback-btn copy-btn" title="' + copyTitle + '" aria-label="' + copyTitle + '">📋</button><button class="feedback-btn play-btn" title="' + playTitle + '" aria-label="' + playTitle + '">🔊</button><button class="feedback-btn" data-rating="1" title="👍">👍</button><button class="feedback-btn" data-rating="-1" title="👎">👎</button></div>';
+    div.innerHTML = '<div class="msg-avatar">L</div><div class="msg-body"><div class="msg-content">' + simpleMarkdown(text) + '</div>' + feedbackHtml + '</div>';
     elements.transcript.appendChild(div);
-    div.querySelector('.play-btn')?.addEventListener('click', () => speak(text, currentLang));
+    div.querySelector('.copy-btn')?.addEventListener('click', () => {
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = div.querySelector('.copy-btn');
+        const orig = btn.textContent;
+        btn.textContent = '✓';
+        setTimeout(() => { btn.textContent = orig; }, 1500);
+      }).catch(() => {});
+    });
+    div.querySelector('.play-btn')?.addEventListener('click', () => speak(text, lastDetectedLang));
     div.querySelectorAll('.feedback-btn[data-rating]').forEach(btn => {
       btn.addEventListener('click', () => sendFeedback(div.dataset.messageId, parseInt(btn.dataset.rating), btn, div));
     });
-    elements.transcript.scrollTop = elements.transcript.scrollHeight;
+    scrollChatToBottom();
     updateEmptyState();
   }
 
@@ -291,25 +433,19 @@
     return d.innerHTML;
   }
 
-  function sendSetLanguage(lang) {
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({ type: 'set_language', lang }));
-    }
-  }
-
   let speechFallbackLang = null;
 
   function initSpeechRecognition() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      elements.hint.textContent = currentLang === 'sq-AL' ? 'Shfletuesi juaj nuk mbështet njohjen e zërit. Provoni Chrome.' : 'Tarayıcınız ses tanıma desteklemiyor. Chrome kullanın.';
+      if (elements.hint) elements.hint.textContent = t('speechNotSupported');
       return false;
     }
 
     recognition = new SpeechRecognition();
     recognition.continuous = true;
     recognition.interimResults = true;
-    recognition.lang = speechFallbackLang || currentLang;
+    recognition.lang = speechFallbackLang || (navigator.language || 'en-US');
 
     recognition.onstart = () => {
       isListening = true;
@@ -344,12 +480,12 @@
     recognition.onerror = (e) => {
       if (e.error === 'no-speech' || e.error === 'aborted') return;
       if (e.error === 'not-allowed') {
-        elements.hint.textContent = currentLang === 'sq-AL' ? 'Lejoni mikrofonin në cilësimet e shfletuesit.' : 'Tarayıcı ayarlarından mikrofon iznini verin.';
+        elements.hint.textContent = 'Allow microphone in browser settings.';
         return;
       }
-      if ((e.error === 'language-not-supported' || e.error === 'network') && currentLang === 'sq-AL' && !speechFallbackLang) {
+      if ((e.error === 'language-not-supported' || e.error === 'network') && !speechFallbackLang) {
         speechFallbackLang = 'en-US';
-        elements.hint.textContent = 'Folni në shqip ose anglisht — AI do të përgjigjet në shqip. Klikoni mikrofonin përsëri.';
+        elements.hint.textContent = 'Speak in any language. Click mic again.';
         return;
       }
       console.error('Speech recognition error:', e.error);
@@ -366,8 +502,7 @@
     if (isListening) {
       recognition.stop();
     } else {
-      const lang = speechFallbackLang || currentLang;
-      recognition.lang = lang;
+      recognition.lang = speechFallbackLang || (navigator.language || 'en-US');
       recognition.start();
     }
   }
@@ -395,7 +530,7 @@
     if (!text || !text.trim()) return;
 
     stopSpeaking();
-    const useLang = lang || currentLang;
+    const useLang = lang || lastDetectedLang;
     const utterance = new SpeechSynthesisUtterance(text.trim());
     utterance.lang = useLang;
     utterance.rate = useLang === 'sq-AL' ? 0.92 : 1.0;
@@ -425,30 +560,9 @@
     autoSpeak = !autoSpeak;
     localStorage.setItem('leohoca_autospeak', autoSpeak ? '1' : '0');
     elements.voiceToggle.textContent = autoSpeak ? '🔊' : '🔇';
-    elements.voiceToggle.title = autoSpeak ? (currentLang === 'sq-AL' ? 'Zëri aktiv' : 'Sesli yanıt açık') : (currentLang === 'sq-AL' ? 'Shtypni 🔊 te mesazhi për të dëgjuar' : 'Mesajdaki 🔊 ile dinle');
+    elements.voiceToggle.title = autoSpeak ? 'Voice on' : 'Click 🔊 on message to listen';
   });
   if (elements.voiceToggle) elements.voiceToggle.textContent = autoSpeak ? '🔊' : '🔇';
-
-  elements.langTabs?.forEach((tab) => {
-    if (tab.dataset.lang === currentLang) {
-      tab.classList.add('active');
-    } else {
-      tab.classList.remove('active');
-    }
-    tab.addEventListener('click', () => {
-      elements.langTabs?.forEach((t) => t.classList.remove('active'));
-      tab.classList.add('active');
-      currentLang = tab.dataset.lang;
-      localStorage.setItem('leohoca_lang', currentLang);
-      updateUI();
-      sendSetLanguage(currentLang);
-      if (recognition && isListening) {
-        recognition.stop();
-        recognition.lang = currentLang;
-        setTimeout(() => recognition.start(), 100);
-      }
-    });
-  });
 
   elements.imgBtn?.addEventListener('click', () => elements.imageInput?.click());
   elements.imageInput?.addEventListener('change', (e) => {
@@ -460,7 +574,7 @@
       const dataUrl = reader.result;
       const base64 = dataUrl.split(',')[1];
       const mime = file.type;
-      const text = elements.textInput?.value?.trim() || (currentLang === 'sq-AL' ? 'Çfarë shihni në këtë imazh?' : 'Bu resimde ne var?');
+      const text = elements.textInput?.value?.trim() || 'What do you see in this image?';
       sendInterrupt();
       stopSpeaking();
       appendUser(text, dataUrl);
@@ -570,6 +684,272 @@
   }
 
   initApp();
+
+  /* Sidebar toggle (mobile) */
+  function openSidebar() {
+    elements.sidebar?.classList.add('open');
+    elements.sidebarOverlay?.classList.add('visible');
+  }
+  function closeSidebar() {
+    elements.sidebar?.classList.remove('open');
+    elements.sidebarOverlay?.classList.remove('visible');
+  }
+  elements.sidebarToggle?.addEventListener('click', () => openSidebar());
+  elements.sidebarOverlay?.addEventListener('click', () => closeSidebar());
+
+  /* New chat */
+  elements.newChatBtn?.addEventListener('click', () => {
+    if (elements.transcript) elements.transcript.innerHTML = '';
+    if (elements.streamingText) { elements.streamingText.textContent = ''; elements.streamingText.classList.remove('active'); }
+    if (elements.streamingMsg) elements.streamingMsg.style.display = 'none';
+    if (elements.typingIndicator) elements.typingIndicator.style.display = 'none';
+    streamedContent = '';
+    updateEmptyState();
+    closeSidebar();
+  });
+
+  /* Search chats */
+  const searchOverlay = document.getElementById('searchOverlay');
+  const searchInput = document.getElementById('searchInput');
+  const searchResults = document.getElementById('searchResults');
+  const searchClose = document.getElementById('searchClose');
+
+  function openSearch() {
+    closeSidebar();
+    searchOverlay?.classList.add('visible');
+    if (searchInput) {
+      searchInput.placeholder = t('searchPlaceholder');
+      searchInput.value = '';
+      searchInput.focus();
+    }
+    runSearch('');
+  }
+
+  function closeSearch() {
+    searchOverlay?.classList.remove('visible');
+    clearSearchHighlight();
+  }
+
+  function clearSearchHighlight() {
+    elements.transcript?.querySelectorAll('.search-highlight').forEach(el => el.classList.remove('search-highlight'));
+  }
+
+  function runSearch(q) {
+    clearSearchHighlight();
+    if (!searchResults) return;
+    searchResults.innerHTML = '';
+    const term = (q || '').trim().toLowerCase();
+    if (!term) return;
+
+    const msgs = elements.transcript?.querySelectorAll('.msg');
+    if (!msgs?.length) { searchResults.innerHTML = '<p class="search-empty">' + t('searchNoResults') + '</p>'; return; }
+
+    const matches = [];
+    msgs.forEach((msg, i) => {
+      const content = msg.querySelector('.msg-content');
+      if (!content) return;
+      const text = content.textContent || '';
+      if (text.toLowerCase().includes(term)) {
+        const idx = text.toLowerCase().indexOf(term);
+        matches.push({ msg, el: content, text, idx });
+      }
+    });
+
+    if (matches.length === 0) {
+      searchResults.innerHTML = '<p class="search-empty">' + t('searchNoResults') + '</p>';
+      return;
+    }
+
+    matches.forEach((m, i) => {
+      const div = document.createElement('button');
+      div.className = 'search-result-item';
+      const snippet = m.text.length > 80 ? m.text.substring(0, 80) + '…' : m.text;
+      div.textContent = snippet;
+      div.addEventListener('click', () => {
+        m.msg.classList.add('search-highlight');
+        m.msg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        closeSearch();
+      });
+      searchResults.appendChild(div);
+    });
+  }
+
+  elements.searchChatsBtn?.addEventListener('click', openSearch);
+  searchClose?.addEventListener('click', closeSearch);
+  searchInput?.addEventListener('input', (e) => runSearch(e.target.value));
+  searchInput?.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSearch(); });
+  searchOverlay?.addEventListener('click', (e) => { if (e.target === searchOverlay) closeSearch(); });
+
+  /* Images - trigger image upload */
+  elements.imagesBtn?.addEventListener('click', () => {
+    elements.imageInput?.click();
+    closeSidebar();
+  });
+
+  /* Applications panel */
+  const applicationsOverlay = document.getElementById('applicationsOverlay');
+  const appsGrid = document.getElementById('appsGrid');
+  const applicationsClose = document.getElementById('applicationsClose');
+
+  function openApplications() {
+    closeSidebar();
+    applicationsOverlay?.classList.add('visible');
+    appsGrid.innerHTML = '';
+    APPS.forEach(app => {
+      const btn = document.createElement('button');
+      btn.className = 'app-btn';
+      btn.textContent = app[uiLang === 'sq-AL' ? 'sq' : (uiLang === 'tr-TR' ? 'tr' : 'en')] || app.tr;
+      btn.addEventListener('click', () => {
+        const prompt = app.prompt[uiLang === 'sq-AL' ? 'sq' : (uiLang === 'tr-TR' ? 'tr' : 'en')] || app.prompt.tr;
+        elements.textInput.value = prompt + (elements.textInput.value || '');
+        elements.textInput.focus();
+        applicationsOverlay?.classList.remove('visible');
+      });
+      appsGrid.appendChild(btn);
+    });
+  }
+
+  elements.applicationsBtn?.addEventListener('click', openApplications);
+  applicationsClose?.addEventListener('click', () => applicationsOverlay?.classList.remove('visible'));
+  applicationsOverlay?.addEventListener('click', (e) => { if (e.target === applicationsOverlay) applicationsOverlay.classList.remove('visible'); });
+
+  /* Codex - insert code prompt */
+  elements.codexBtn?.addEventListener('click', () => {
+    closeSidebar();
+    const prompt = CODEX_PROMPT[uiLang === 'sq-AL' ? 'sq' : (uiLang === 'tr-TR' ? 'tr' : 'en')] || CODEX_PROMPT.en;
+    elements.textInput.value = prompt + (elements.textInput.value || '');
+    elements.textInput.focus();
+  });
+
+  /* Projects panel */
+  const projectsOverlay = document.getElementById('projectsOverlay');
+  const projectsList = document.getElementById('projectsList');
+  const saveProjectBtn = document.getElementById('saveProjectBtn');
+  const projectsClose = document.getElementById('projectsClose');
+  const PROJECTS_KEY = 'leogpt_projects';
+
+  function getProjects() {
+    try {
+      return JSON.parse(localStorage.getItem(PROJECTS_KEY) || '[]');
+    } catch { return []; }
+  }
+
+  function saveProjects(projects) {
+    localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects));
+  }
+
+  function getTranscriptData() {
+    const msgs = [];
+    elements.transcript?.querySelectorAll('.msg').forEach((msg) => {
+      const content = msg.querySelector('.msg-content');
+      if (!content) return;
+      const role = msg.classList.contains('user') ? 'user' : 'ai';
+      const text = content.textContent || '';
+      if (text) msgs.push({ role, content: text });
+    });
+    return msgs;
+  }
+
+  function loadTranscript(msgs) {
+    if (!elements.transcript) return;
+    elements.transcript.innerHTML = '';
+    if (elements.streamingText) { elements.streamingText.textContent = ''; elements.streamingText.classList.remove('active'); }
+    if (elements.streamingMsg) elements.streamingMsg.style.display = 'none';
+    if (elements.typingIndicator) elements.typingIndicator.style.display = 'none';
+    streamedContent = '';
+    msgs.forEach((m) => {
+      if (m.role === 'user') appendUser(m.content);
+      else appendAI(m.content);
+    });
+    updateEmptyState();
+  }
+
+  function renderProjectsList() {
+    projectsList.innerHTML = '';
+    const projects = getProjects();
+    if (projects.length === 0) {
+      projectsList.innerHTML = '<p class="projects-empty">' + (uiLang === 'sq-AL' ? 'Nuk ka projekte' : (uiLang === 'tr-TR' ? 'Proje yok' : 'No projects')) + '</p>';
+      return;
+    }
+    projects.reverse().forEach((proj) => {
+      const div = document.createElement('div');
+      div.className = 'project-item';
+      const openLabel = uiLang === 'sq-AL' ? 'Hap' : (uiLang === 'tr-TR' ? 'Aç' : 'Open');
+      div.innerHTML = '<span class="project-title">' + escapeHtml(proj.title || 'Chat') + '</span><div class="project-actions"><button class="project-load" data-id="' + proj.id + '">' + openLabel + '</button><button class="project-delete" data-id="' + proj.id + '">×</button></div>';
+      div.querySelector('.project-load')?.addEventListener('click', () => {
+        const p = getProjects().find(x => x.id === proj.id);
+        if (p?.messages) loadTranscript(p.messages);
+        projectsOverlay?.classList.remove('visible');
+      });
+      div.querySelector('.project-delete')?.addEventListener('click', () => {
+        const next = getProjects().filter(x => x.id !== proj.id);
+        saveProjects(next);
+        renderProjectsList();
+      });
+      projectsList.appendChild(div);
+    });
+  }
+
+  function openProjects() {
+    closeSidebar();
+    projectsOverlay?.classList.add('visible');
+    saveProjectBtn.textContent = t('saveProject');
+    renderProjectsList();
+  }
+
+  saveProjectBtn?.addEventListener('click', () => {
+    const msgs = getTranscriptData();
+    if (msgs.length === 0) return;
+    const firstUser = msgs.find(m => m.role === 'user');
+    const title = (firstUser?.content || 'Bisedë').substring(0, 40) + (firstUser?.content?.length > 40 ? '…' : '');
+    const projects = getProjects();
+    const proj = { id: 'p-' + Date.now(), title, messages: msgs, createdAt: Date.now() };
+    projects.push(proj);
+    saveProjects(projects);
+    renderProjectsList();
+  });
+
+  elements.projectsBtn?.addEventListener('click', openProjects);
+  projectsClose?.addEventListener('click', () => projectsOverlay?.classList.remove('visible'));
+  projectsOverlay?.addEventListener('click', (e) => { if (e.target === projectsOverlay) projectsOverlay.classList.remove('visible'); });
+
+  /* Theme toggle */
+  const savedTheme = localStorage.getItem('leohoca_theme') || 'light';
+  document.body.classList.toggle('theme-dark', savedTheme === 'dark');
+  document.body.classList.toggle('theme-light', savedTheme === 'light');
+  const themeIcon = document.querySelector('.theme-icon');
+  if (themeIcon) themeIcon.textContent = savedTheme === 'dark' ? '🌙' : '☀️';
+
+  elements.themeToggle?.addEventListener('click', () => {
+    const isDark = document.body.classList.contains('theme-dark');
+    const next = isDark ? 'light' : 'dark';
+    document.body.classList.toggle('theme-dark', next === 'dark');
+    document.body.classList.toggle('theme-light', next === 'light');
+    localStorage.setItem('leohoca_theme', next);
+    if (themeIcon) themeIcon.textContent = next === 'dark' ? '🌙' : '☀️';
+  });
+
+  /* Scroll to bottom button */
+  const chatContainer = document.getElementById('chatContainer');
+  const scrollToBottom = document.getElementById('scrollToBottom');
+  if (chatContainer && scrollToBottom) {
+    chatContainer.addEventListener('scroll', () => {
+      const { scrollTop, scrollHeight, clientHeight } = chatContainer;
+      scrollToBottom.style.display = scrollHeight - scrollTop - clientHeight > 100 ? 'flex' : 'none';
+    });
+    scrollToBottom.addEventListener('click', () => {
+      chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
+    });
+  }
+
+  /* Keyboard shortcuts - only when main app is visible */
+  document.addEventListener('keydown', (e) => {
+    if (mainApp?.style?.display !== 'flex') return;
+    if (e.ctrlKey || e.metaKey) {
+      if (e.key === 'k') { e.preventDefault(); openSearch(); }
+      if (e.key === 'Enter') { e.preventDefault(); doSend(); }
+    }
+  });
 
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(() => {});

@@ -151,13 +151,8 @@ wss.on('connection', (ws, req) => {
           ws.send(JSON.stringify({ type: 'interrupt_ack' }));
           break;
 
-        case 'set_language': {
-          const lang = (msg.lang === 'sq-AL' || msg.lang === 'tr-TR') ? msg.lang : 'sq-AL';
-          setPreferredLanguage(sessionId, lang);
-          ws.send(JSON.stringify({ type: 'language_set', lang }));
-          ws.send(JSON.stringify({ type: 'greeting', greeting: ai.getGreeting(lang) }));
+        case 'set_language':
           break;
-        }
 
         default:
           ws.send(JSON.stringify({ type: 'error', message: 'Unknown message type' }));
@@ -173,6 +168,7 @@ wss.on('connection', (ws, req) => {
   });
 
   ws.send(JSON.stringify({ type: 'connected', sessionId }));
+  ws.send(JSON.stringify({ type: 'greeting', greeting: ai.getGreeting() }));
 });
 
 // Keep connections alive
