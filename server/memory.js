@@ -27,7 +27,8 @@ function getOrCreateSession(sessionId) {
       id: sessionId,
       messages: [],
       lastActivity: Date.now(),
-      detectedLanguage: null
+      detectedLanguage: null,
+      preferredLanguage: 'tr-TR'
     };
     sessions.set(sessionId, session);
   }
@@ -65,6 +66,17 @@ function getDetectedLanguage(sessionId) {
   return session?.detectedLanguage || null;
 }
 
+function setPreferredLanguage(sessionId, lang) {
+  const session = getOrCreateSession(sessionId);
+  session.preferredLanguage = lang === 'sq-AL' ? 'sq-AL' : 'tr-TR';
+  return session;
+}
+
+function getPreferredLanguage(sessionId) {
+  const session = getSession(sessionId);
+  return session?.preferredLanguage || 'tr-TR';
+}
+
 function clearSession(sessionId) {
   sessions.delete(sessionId);
 }
@@ -76,5 +88,7 @@ module.exports = {
   getConversationHistory,
   setDetectedLanguage,
   getDetectedLanguage,
+  setPreferredLanguage,
+  getPreferredLanguage,
   clearSession
 };

@@ -45,7 +45,7 @@
     micBtn: document.getElementById('micBtn'),
     textInput: document.getElementById('textInput'),
     hint: document.getElementById('hint'),
-    langBadge: document.getElementById('langBadge')
+    langTabs: document.querySelectorAll('.lang-tab')
   };
 
   function setStatus(text, state = '') {
@@ -79,6 +79,11 @@
     switch (msg.type) {
       case 'connected':
         sessionId = msg.sessionId;
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: 'set_language', lang: currentLang }));
+        }
+        break;
+      case 'greeting':
         if (msg.greeting) {
           appendAI(msg.greeting);
           speak(msg.greeting, currentLang);
@@ -99,11 +104,8 @@
         elements.streamingText.textContent = '';
         elements.streamingText.classList.remove('active');
         appendAI(streamedContent || msg.content);
-        const detectedLang = msg.language || currentLang;
-        updateLangBadge(detectedLang);
-        currentLang = detectedLang;
         if (!userInterrupted && (streamedContent || msg.content)) {
-          speak(streamedContent || msg.content, detectedLang);
+          speak(streamedContent || msg.content, currentLang);
         }
         userInterrupted = false;
         break;
@@ -151,8 +153,10 @@
     return d.innerHTML;
   }
 
-  function updateLangBadge(lang) {
-    if (elements.langBadge) elements.langBadge.textContent = lang === 'sq-AL' ? 'SQ' : 'TR';
+  function sendSetLanguage(lang) {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({ type: 'set_language', lang }));
+    }
   }
 
   function initSpeechRecognition() {
@@ -178,7 +182,7 @@
       isListening = false;
       elements.micBtn.classList.remove('listening');
       elements.visualizer.classList.remove('listening');
-      elements.hint.textContent = 'Konuşun veya yazın — dil otomatik algılanır';
+      elements.hint.textContent = 'TR = Türkçe, SQ = Arnavutça — seçtiğin dilde konuşur';
     };
 
     recognition.onresult = (e) => {
@@ -266,6 +270,20 @@
     toggleMic();
   });
 
+  elements.langTabs?.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      elements.langTabs?.forEach((t) => t.classList.remove('active'));
+      tab.classList.add('active');
+      currentLang = tab.dataset.lang;
+      sendSetLanguage(currentLang);
+      if (recognition && isListening) {
+        recognition.stop();
+        recognition.lang = currentLang;
+        setTimeout(() => recognition.start(), 100);
+      }
+    });
+  });
+
   if (elements.textInput) {
     elements.textInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && !e.shiftKey) {
@@ -288,11 +306,64 @@
 
   synthesis.addEventListener('voiceschanged', () => synthesis.getVoices());
 
+  const passwordOverlay = document.getElementById('passwordOverlay');
+  const passwordInput = document.getElementById('passwordInput');
+  const passwordSubmit = document.getElementById('passwordSubmit');
+  const passwordError = document.getElementById('passwordError');
   const setupOverlay = document.getElementById('setupOverlay');
   const backendInput = document.getElementById('backendUrl');
   const saveBtn = document.getElementById('saveBackend');
 
-  if (needsSetup() && setupOverlay) {
+  function showApp() {
+    passwordOverlay.style.display = 'none';
+    setupOverlay.style.display = 'none';
+    if (needsSetup()) {
+      setupOverlay.style.display = 'flex';
+    } else {
+      connect();
+    }
+  }
+
+  function initApp() {
+    if (sessionStorage.getItem('leohoca_auth') === '1') {
+      showApp();
+      return;
+    }
+    fetch(BACKEND + '/api/auth/required')
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.required) {
+          passwordOverlay.style.display = 'flex';
+          passwordSubmit?.addEventListener('click', () => {
+            const pwd = passwordInput?.value || '';
+            passwordError.textContent = '';
+            fetch(BACKEND + '/api/auth', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ password: pwd })
+            })
+              .then((r) => r.json())
+              .then((data) => {
+                if (data.ok) {
+                  sessionStorage.setItem('leohoca_auth', '1');
+                  showApp();
+                } else {
+                  passwordError.textContent = 'Yanlış şifre';
+                }
+              })
+              .catch(() => { passwordError.textContent = 'Bağlantı hatası'; });
+          });
+          passwordInput?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') passwordSubmit?.click();
+          });
+        } else {
+          showApp();
+        }
+      })
+      .catch(() => showApp());
+  }
+
+  if (needsSetup()) {
     setupOverlay.style.display = 'flex';
     saveBtn?.addEventListener('click', () => {
       const url = (backendInput?.value || '').trim().replace(/\/$/, '');
@@ -304,8 +375,7 @@
       location.reload();
     });
   } else {
-    connect();
-    fetch(BACKEND + '/api/network').then((r) => r.json()).catch(() => ({}));
+    initApp();
   }
 
   if ('serviceWorker' in navigator) {

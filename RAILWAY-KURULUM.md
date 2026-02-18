@@ -16,12 +16,24 @@ Railway otomatik yeniden deploy eder. 1-2 dakika sonra LeoHoca çalışır.
 
 ---
 
+## Şifre Koruması (Opsiyonel)
+
+Sadece şifreyi bildiğiniz kişilerin kullanmasını istiyorsanız:
+
+1. Railway **Variables** → **+ New Variable**
+2. **Name:** `LEOHOCA_PASSWORD`
+3. **Value:** Belirlediğiniz şifre (örn: `leo123`)
+4. Bu şifreyi kullanmak istediğiniz kişilere verin
+
+Şifre eklemezseniz herkes erişebilir.
+
 ## Kontrol Listesi
 
 - [x] GitHub'a push edildi
 - [x] Railway'de deploy edildi
 - [x] Domain: leohoca-production.up.railway.app
 - [ ] **GROQ_API_KEY** eklendi (Variables)
+- [ ] **LEOHOCA_PASSWORD** (opsiyonel - şifre koruması)
 
 ---
 

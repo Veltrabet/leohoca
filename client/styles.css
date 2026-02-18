@@ -333,8 +333,35 @@ body {
   text-align: center;
 }
 
-/* Setup overlay */
-.setup-overlay {
+.lang-tabs {
+  display: flex;
+  gap: 0.2rem;
+}
+
+.lang-tab {
+  padding: 0.3rem 0.6rem;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.lang-tab:hover {
+  color: var(--text-primary);
+}
+
+.lang-tab.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+
+/* Overlays */
+.overlay {
   position: fixed;
   inset: 0;
   background: rgba(12, 18, 34, 0.98);
@@ -345,7 +372,7 @@ body {
   padding: 1.5rem;
 }
 
-.setup-box {
+.overlay-box {
   background: var(--bg-card);
   border-radius: var(--radius-lg);
   padding: 2rem;
@@ -354,15 +381,22 @@ body {
   border: 1px solid var(--border);
 }
 
-.setup-box h2 {
+.overlay-box h2 {
   margin-bottom: 1rem;
   font-size: 1.2rem;
 }
 
-.setup-box p {
+.overlay-box p {
   color: var(--text-secondary);
   font-size: 0.9rem;
   margin-bottom: 1rem;
+}
+
+.error-msg {
+  color: #ef4444;
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+  min-height: 1.2em;
 }
 
 .setup-steps {
@@ -373,17 +407,17 @@ body {
   line-height: 1.8;
 }
 
-.setup-steps a {
+.overlay-box .setup-steps a {
   color: var(--accent);
 }
 
-.setup-steps code {
+.overlay-box .setup-steps code {
   background: var(--bg-elevated);
   padding: 0.1rem 0.4rem;
   border-radius: 4px;
 }
 
-.setup-box input {
+.overlay-box input {
   width: 100%;
   padding: 0.75rem 1rem;
   border-radius: var(--radius);
@@ -394,7 +428,7 @@ body {
   margin: 1rem 0;
 }
 
-.setup-box button {
+.overlay-box button {
   width: 100%;
   padding: 0.9rem;
   background: var(--accent);

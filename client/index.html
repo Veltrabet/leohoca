@@ -4,10 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#0c1222">
-  <meta name="description" content="LeoHoca - Her konuda uzman sesli yapay zeka asistanı">
+  <meta name="description" content="Leo - Arkadaş gibi yapay zeka asistanı">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>LeoHoca - AI Asistan</title>
+  <title>Leo - AI Arkadaş</title>
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,9 +17,18 @@
   <script src="config.js"></script>
 </head>
 <body>
-  <div id="setupOverlay" class="setup-overlay" style="display:none">
-    <div class="setup-box">
-      <h2>LeoHoca Kurulum</h2>
+  <div id="passwordOverlay" class="overlay" style="display:none">
+    <div class="overlay-box">
+      <h2>Leo</h2>
+      <p>Erişim için şifre girin</p>
+      <input type="password" id="passwordInput" placeholder="Şifre" autocomplete="off" />
+      <p class="error-msg" id="passwordError"></p>
+      <button id="passwordSubmit">Giriş</button>
+    </div>
+  </div>
+  <div id="setupOverlay" class="overlay" style="display:none">
+    <div class="overlay-box">
+      <h2>Leo Kurulum</h2>
       <p>Backend bağlantısı için Railway URL'si gerekli.</p>
       <ol class="setup-steps">
         <li><a href="https://railway.app" target="_blank">railway.app</a> → GitHub ile deploy edin</li>
@@ -35,12 +44,15 @@
       <div class="logo">
         <div class="logo-avatar">L</div>
         <div>
-          <h1>LeoHoca</h1>
-          <span class="tagline">Her konuda uzman asistan</span>
+          <h1>Leo</h1>
+          <span class="tagline">Arkadaşın gibi burada</span>
         </div>
       </div>
       <div class="header-right">
-        <span class="lang-badge" id="langBadge">TR</span>
+        <div class="lang-tabs">
+          <button class="lang-tab active" data-lang="tr-TR">TR</button>
+          <button class="lang-tab" data-lang="sq-AL">SQ</button>
+        </div>
         <div class="status" id="status">
           <span class="status-dot"></span>
           <span class="status-text">Bağlanıyor</span>
@@ -64,7 +76,7 @@
 
       <div class="input-area">
         <div class="input-row">
-          <input type="text" id="textInput" placeholder="Yazın veya mikrofonla konuşun..." autocomplete="off" />
+          <input type="text" id="textInput" placeholder="Yaz veya konuş..." autocomplete="off" />
           <button class="mic-btn" id="micBtn" aria-label="Konuş">
             <svg class="mic-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
@@ -74,7 +86,7 @@
             </svg>
           </button>
         </div>
-        <p class="hint" id="hint">Konuşun veya yazın — dil otomatik algılanır</p>
+        <p class="hint" id="hint">TR = Türkçe, SQ = Arnavutça — seçtiğin dilde konuşur</p>
       </div>
     </main>
   </div>

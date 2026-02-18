@@ -4,7 +4,7 @@
  * Yerel: Ollama (ücretsiz, sınırsız)
  */
 
-const { getConversationHistory, addMessage, setDetectedLanguage, getDetectedLanguage } = require('./memory');
+const { getConversationHistory, addMessage, setDetectedLanguage, getDetectedLanguage, getPreferredLanguage } = require('./memory');
 const persona = require('./config/persona.json');
 
 let aiProvider = null; // 'groq' | 'gemini' | 'openai' | 'ollama'
@@ -49,10 +49,10 @@ function initAI() {
 
 function buildMessages(sessionId, userMessage) {
   const history = getConversationHistory(sessionId);
-  const detectedLang = getDetectedLanguage(sessionId);
+  const preferredLang = getPreferredLanguage(sessionId);
   
   const systemPrompt = persona.systemPrompt + 
-    (detectedLang ? `\n\nCurrent language context: User prefers ${detectedLang}. Respond in that language.` : '');
+    `\n\nÖNEMLİ: Kullanıcı ${preferredLang === 'sq-AL' ? 'Arnavutça' : 'Türkçe'} seçti. SADECE ${preferredLang === 'sq-AL' ? 'Arnavutça' : 'Türkçe'} cevap ver.`;
   
   const messages = [
     { role: 'system', content: systemPrompt }

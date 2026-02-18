@@ -31,7 +31,7 @@ function getLocalIP() {
   return null;
 }
 const ai = require('./ai');
-const { getDetectedLanguage } = require('./memory');
+const { getDetectedLanguage, setPreferredLanguage, getPreferredLanguage } = require('./memory');
 
 const app = express();
 const server = http.createServer(app);
@@ -41,6 +41,26 @@ const PORT = process.env.PORT || 3000;
 ai.initAI();
 
 app.use(cors);
+app.use(express.json());
+
+// API: Auth - şifre kontrolü
+app.post('/api/auth', (req, res) => {
+  const pwd = process.env.LEOHOCA_PASSWORD;
+  if (!pwd || pwd.trim() === '') {
+    return res.json({ ok: true });
+  }
+  const { password } = req.body || {};
+  if (password === pwd) {
+    return res.json({ ok: true });
+  }
+  res.status(401).json({ ok: false });
+});
+
+// API: Şifre gerekli mi?
+app.get('/api/auth/required', (req, res) => {
+  res.json({ required: !!(process.env.LEOHOCA_PASSWORD && process.env.LEOHOCA_PASSWORD.trim()) });
+});
+
 // Serve static client files
 app.use(express.static(path.join(__dirname, '../client')));
 
@@ -130,7 +150,12 @@ wss.on('connection', (ws, req) => {
           break;
 
         case 'set_language':
+          const hadMessages = (require('./memory').getConversationHistory(sessionId) || []).length > 0;
+          setPreferredLanguage(sessionId, msg.lang);
           ws.send(JSON.stringify({ type: 'language_set', lang: msg.lang }));
+          if (!hadMessages) {
+            ws.send(JSON.stringify({ type: 'greeting', greeting: ai.getGreeting(msg.lang) }));
+          }
           break;
 
         default:
@@ -146,11 +171,7 @@ wss.on('connection', (ws, req) => {
     ws.isAlive = false;
   });
 
-  ws.send(JSON.stringify({ 
-    type: 'connected', 
-    sessionId,
-    greeting: ai.getGreeting('tr-TR')
-  }));
+  ws.send(JSON.stringify({ type: 'connected', sessionId }));
 });
 
 // Keep connections alive
