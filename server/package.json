@@ -1,0 +1,21 @@
+{
+  "name": "leohoca-server",
+  "version": "1.0.0",
+  "description": "LeoHoca Voice AI Assistant - Backend",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "groq-sdk": "^0.5.0",
+    "openai": "^4.20.1",
+    "uuid": "^9.0.0",
+    "ws": "^8.14.2"
+  },
+  "optionalDependencies": {
+    "@google/generative-ai": "^0.21.0"
+  }
+}

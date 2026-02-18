@@ -1,0 +1,13 @@
+{
+  "name": "leohoca",
+  "version": "1.0.0",
+  "description": "LeoHoca - Real-time Voice AI Assistant",
+  "private": true,
+  "scripts": {
+    "start": "cd server && node index.js",
+    "icons": "node scripts/generate-icons.js"
+  },
+  "devDependencies": {
+    "sharp": "^0.33.2"
+  }
+}

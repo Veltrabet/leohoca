@@ -1,0 +1,29 @@
+{
+  "languages": {
+    "tr-TR": {
+      "name": "Turkish",
+      "speechRecognition": "tr-TR",
+      "speechSynthesis": {
+        "lang": "tr-TR",
+        "rate": 1.0,
+        "pitch": 1.0
+      }
+    },
+    "sq-AL": {
+      "name": "Albanian",
+      "speechRecognition": "sq-AL",
+      "speechSynthesis": {
+        "lang": "sq-AL",
+        "rate": 1.0,
+        "pitch": 1.0
+      }
+    }
+  },
+  "defaultLanguage": "tr-TR",
+  "fallbackLanguage": "tr-TR",
+  "synthesis": {
+    "rate": 1.0,
+    "pitch": 1.0,
+    "volume": 1.0
+  }
+}
