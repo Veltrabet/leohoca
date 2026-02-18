@@ -122,6 +122,7 @@
   let currentUtterance = null;
   let streamedContent = '';
   let userInterrupted = false;
+  let autoSpeak = localStorage.getItem('leohoca_autospeak') === '1';
 
   const elements = {
     status: document.getElementById('status'),
@@ -136,7 +137,8 @@
     textInput: document.getElementById('textInput'),
     hint: document.getElementById('hint'),
     langTabs: document.querySelectorAll('.lang-tab'),
-    emptyState: document.getElementById('emptyState')
+    emptyState: document.getElementById('emptyState'),
+    voiceToggle: document.getElementById('voiceToggle')
   };
 
   function doSend() {
@@ -188,7 +190,7 @@
       case 'greeting':
         if (msg.greeting) {
           appendAI(msg.greeting);
-          speak(msg.greeting, currentLang);
+          if (autoSpeak) speak(msg.greeting, currentLang);
         }
         break;
       case 'ai_start':
@@ -208,9 +210,7 @@
         elements.streamingText.classList.remove('active');
         const finalContent = streamedContent || msg.content || '';
         appendAI(finalContent, 'msg-' + Date.now());
-        if (!userInterrupted && finalContent) {
-          speak(finalContent, currentLang);
-        }
+        if (autoSpeak && !userInterrupted && finalContent) speak(finalContent, currentLang);
         userInterrupted = false;
         break;
       case 'interrupt_ack':
@@ -257,10 +257,12 @@
     const div = document.createElement('div');
     div.className = 'msg ai';
     div.dataset.messageId = messageId || 'msg-' + Date.now();
-    const feedbackHtml = '<div class="feedback-btns"><button class="feedback-btn" data-rating="1" title="' + (currentLang === 'sq-AL' ? 'Më pëlqen' : 'Beğendim') + '">👍</button><button class="feedback-btn" data-rating="-1" title="' + (currentLang === 'sq-AL' ? 'Nuk më pëlqen' : 'Beğenmedim') + '">👎</button></div>';
+    const playTitle = currentLang === 'sq-AL' ? 'Dëgjoni' : 'Dinle';
+    const feedbackHtml = '<div class="feedback-btns"><button class="feedback-btn play-btn" title="' + playTitle + '" aria-label="' + playTitle + '">🔊</button><button class="feedback-btn" data-rating="1" title="' + (currentLang === 'sq-AL' ? 'Më pëlqen' : 'Beğendim') + '">👍</button><button class="feedback-btn" data-rating="-1" title="' + (currentLang === 'sq-AL' ? 'Nuk më pëlqen' : 'Beğenmedim') + '">👎</button></div>';
     div.innerHTML = '<div class="msg-avatar">L</div><div class="msg-body"><div class="msg-content">' + escapeHtml(text) + '</div>' + feedbackHtml + '</div>';
     elements.transcript.appendChild(div);
-    div.querySelectorAll('.feedback-btn').forEach(btn => {
+    div.querySelector('.play-btn')?.addEventListener('click', () => speak(text, currentLang));
+    div.querySelectorAll('.feedback-btn[data-rating]').forEach(btn => {
       btn.addEventListener('click', () => sendFeedback(div.dataset.messageId, parseInt(btn.dataset.rating), btn, div));
     });
     elements.transcript.scrollTop = elements.transcript.scrollHeight;
@@ -381,7 +383,7 @@
   function getVoiceForLang(lang) {
     const voices = synthesis.getVoices();
     const code = (lang || '').split('-')[0];
-    const preferred = voices.find((v) => v.lang.startsWith(code));
+    const preferred = voices.find((v) => v.lang.startsWith(code) || v.lang === 'sq-AL' || v.lang === 'sq');
     const fallbackCode = code === 'sq' ? 'en' : 'tr';
     const fallback = voices.find((v) => v.lang.startsWith(fallbackCode))
       || voices.find((v) => v.lang.startsWith('en'))
@@ -396,7 +398,7 @@
     const useLang = lang || currentLang;
     const utterance = new SpeechSynthesisUtterance(text.trim());
     utterance.lang = useLang;
-    utterance.rate = 1.0;
+    utterance.rate = useLang === 'sq-AL' ? 0.92 : 1.0;
     utterance.pitch = 1.0;
     utterance.volume = 1.0;
 
@@ -418,6 +420,14 @@
     }
     toggleMic();
   });
+
+  elements.voiceToggle?.addEventListener('click', () => {
+    autoSpeak = !autoSpeak;
+    localStorage.setItem('leohoca_autospeak', autoSpeak ? '1' : '0');
+    elements.voiceToggle.textContent = autoSpeak ? '🔊' : '🔇';
+    elements.voiceToggle.title = autoSpeak ? (currentLang === 'sq-AL' ? 'Zëri aktiv' : 'Sesli yanıt açık') : (currentLang === 'sq-AL' ? 'Shtypni 🔊 te mesazhi për të dëgjuar' : 'Mesajdaki 🔊 ile dinle');
+  });
+  if (elements.voiceToggle) elements.voiceToggle.textContent = autoSpeak ? '🔊' : '🔇';
 
   elements.langTabs?.forEach((tab) => {
     if (tab.dataset.lang === currentLang) {
