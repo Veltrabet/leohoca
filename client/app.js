@@ -43,8 +43,9 @@
     streamingText: document.getElementById('streamingText'),
     visualizer: document.getElementById('visualizer'),
     micBtn: document.getElementById('micBtn'),
+    textInput: document.getElementById('textInput'),
     hint: document.getElementById('hint'),
-    langTabs: document.querySelectorAll('.lang-tab')
+    langBadge: document.getElementById('langBadge')
   };
 
   function setStatus(text, state = '') {
@@ -98,9 +99,11 @@
         elements.streamingText.textContent = '';
         elements.streamingText.classList.remove('active');
         appendAI(streamedContent || msg.content);
+        const detectedLang = msg.language || currentLang;
+        updateLangBadge(detectedLang);
+        currentLang = detectedLang;
         if (!userInterrupted && (streamedContent || msg.content)) {
-          const lang = msg.language || currentLang;
-          speak(streamedContent || msg.content, lang);
+          speak(streamedContent || msg.content, detectedLang);
         }
         userInterrupted = false;
         break;
@@ -128,18 +131,28 @@
 
   function appendUser(text) {
     const div = document.createElement('div');
-    div.className = 'user-msg';
-    div.textContent = 'Sen: ' + text;
+    div.className = 'msg user';
+    div.innerHTML = '<div class="msg-avatar">S</div><div class="msg-content">' + escapeHtml(text) + '</div>';
     elements.transcript.appendChild(div);
     elements.transcript.scrollTop = elements.transcript.scrollHeight;
   }
 
   function appendAI(text) {
     const div = document.createElement('div');
-    div.className = 'ai-msg';
-    div.textContent = 'LeoHoca: ' + text;
+    div.className = 'msg ai';
+    div.innerHTML = '<div class="msg-avatar">L</div><div class="msg-content">' + escapeHtml(text) + '</div>';
     elements.transcript.appendChild(div);
     elements.transcript.scrollTop = elements.transcript.scrollHeight;
+  }
+
+  function escapeHtml(t) {
+    const d = document.createElement('div');
+    d.textContent = t;
+    return d.innerHTML;
+  }
+
+  function updateLangBadge(lang) {
+    if (elements.langBadge) elements.langBadge.textContent = lang === 'sq-AL' ? 'SQ' : 'TR';
   }
 
   function initSpeechRecognition() {
@@ -165,7 +178,7 @@
       isListening = false;
       elements.micBtn.classList.remove('listening');
       elements.visualizer.classList.remove('listening');
-      elements.hint.textContent = 'Mikrofon butonuna basıp konuşun. Konuşurken AI duraklatılır.';
+      elements.hint.textContent = 'Konuşun veya yazın — dil otomatik algılanır';
     };
 
     recognition.onresult = (e) => {
@@ -253,21 +266,21 @@
     toggleMic();
   });
 
-  elements.langTabs.forEach((tab) => {
-    tab.addEventListener('click', () => {
-      elements.langTabs.forEach((t) => t.classList.remove('active'));
-      tab.classList.add('active');
-      currentLang = tab.dataset.lang;
-      if (recognition && isListening) {
-        recognition.stop();
-        recognition.lang = currentLang;
-        setTimeout(() => recognition.start(), 100);
+  if (elements.textInput) {
+    elements.textInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        const text = elements.textInput.value.trim();
+        if (text) {
+          sendInterrupt();
+          stopSpeaking();
+          appendUser(text);
+          sendChat(text);
+          elements.textInput.value = '';
+        }
       }
-      elements.hint.textContent = currentLang === 'sq-AL' 
-        ? 'Shtypni butonin e mikrofonit dhe folni. AI ndërpritet kur flisni.'
-        : 'Mikrofon butonuna basıp konuşun. Konuşurken AI duraklatılır.';
     });
-  });
+  }
 
   document.addEventListener('visibilitychange', () => {
     if (document.hidden && isListening) recognition?.stop();
@@ -292,17 +305,7 @@
     });
   } else {
     connect();
-    fetch(BACKEND + '/api/network')
-    .then((r) => r.json())
-    .then((d) => {
-      if (d.phoneUrl && !/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent)) {
-        const el = document.getElementById('phoneUrl');
-        if (el) {
-          el.innerHTML = '📱 Telefon: <a href="' + d.phoneUrl + '" target="_blank">' + d.phoneUrl + '</a>';
-        }
-      }
-    })
-    .catch(() => {});
+    fetch(BACKEND + '/api/network').then((r) => r.json()).catch(() => ({}));
   }
 
   if ('serviceWorker' in navigator) {

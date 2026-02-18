@@ -69,12 +69,13 @@ function buildMessages(sessionId, userMessage) {
 }
 
 function detectLanguage(text) {
-  const turkishIndicators = /[ğüşıöçĞÜŞİÖÇ]|merhaba|teşekkür|nasıl|var mı|yok mu|evet|hayır|için|ile|bunu|şu|bunlar|türkçe/i;
-  const albanianIndicators = /[ëç]|përshëndetje|faleminderit|si|po|jo|për|me|ky|kjo|shqip|shqiptar/i;
-  
-  if (albanianIndicators.test(text) && !turkishIndicators.test(text)) {
-    return 'sq-AL';
-  }
+  if (!text || !text.trim()) return 'tr-TR';
+  const t = text.trim();
+  const turkishIndicators = /[ğüşıöçĞÜŞİÖÇ]|merhaba|teşekkür|nasıl|var mı|yok mu|evet|hayır|için|ile|bunu|şu|bunlar|türkçe|neden|ne zaman|nerede|kim|hangi|bana|yardım|lütfen|olur mu|olabilir mi|yapabilir|bilir misin|söyler misin|açıklar mısın/i;
+  const albanianIndicators = /[ë]|përshëndetje|faleminderit|si jeni|si je|po|jo|për|me|ky|kjo|ato|shqip|shqiptar|pse|kur|ku|kush|cila|më ndihmo|ju lutem|mund të|a mund|a dini|a më thoni|a më shpjegoni|faleminderit|mirëmëngjes|mirëdita|natën e mirë/i;
+  const albanianScore = (t.match(albanianIndicators) || []).length;
+  const turkishScore = (t.match(turkishIndicators) || []).length;
+  if (albanianScore > turkishScore) return 'sq-AL';
   return 'tr-TR';
 }
 

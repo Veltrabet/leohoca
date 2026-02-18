@@ -1,0 +1,36 @@
+# LeoHoca - Railway Kurulum Rehberi
+
+LeoHoca artık **https://leohoca-production.up.railway.app** adresinde çalışıyor.
+
+## Tek Yapmanız Gereken: GROQ_API_KEY
+
+1. **Railway Dashboard** → https://railway.app/dashboard
+2. **leohoca** projenize tıklayın
+3. **leohoca** servisine tıklayın
+4. **Variables** sekmesi → **+ New Variable**
+5. **Name:** `GROQ_API_KEY`
+6. **Value:** Groq API anahtarınız (https://console.groq.com)
+7. Kaydedin
+
+Railway otomatik yeniden deploy eder. 1-2 dakika sonra LeoHoca çalışır.
+
+---
+
+## Kontrol Listesi
+
+- [x] GitHub'a push edildi
+- [x] Railway'de deploy edildi
+- [x] Domain: leohoca-production.up.railway.app
+- [ ] **GROQ_API_KEY** eklendi (Variables)
+
+---
+
+## Kullanım
+
+**https://leohoca-production.up.railway.app** adresine gidin.
+
+- Mikrofon butonuna basıp konuşun
+- TR / SQ dil seçin
+- LeoHoca yanıt verir ve sesli okur
+
+Domain almaya gerek yok. Bu link herkese açık.
