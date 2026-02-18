@@ -90,9 +90,10 @@ function detectLanguage(text) {
 
 async function streamWithGroq(messages, onChunk, onComplete) {
   try {
+    const groqMessages = messages.map((m) => ({ role: m.role, content: m.content }));
     const stream = await groqClient.chat.completions.create({
       model: GROQ_MODEL,
-      messages,
+      messages: groqMessages,
       stream: true,
       max_tokens: 1000,
       temperature: 0.8
