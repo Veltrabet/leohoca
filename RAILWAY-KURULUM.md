@@ -27,12 +27,23 @@ Sadece şifreyi bildiğiniz kişilerin kullanmasını istiyorsanız:
 
 Şifre eklemezseniz herkes erişebilir.
 
+## Yeni Özellikler için Ek Variables
+
+Kayıt, giriş ve admin paneli için:
+
+| Name | Value |
+|------|-------|
+| `ADMIN_EMAIL` | admin@email.com |
+| `ADMIN_PASSWORD` | guvenli_sifre |
+| `JWT_SECRET` | rastgele_uzun_anahtar (min 32 karakter) |
+
 ## Kontrol Listesi
 
 - [x] GitHub'a push edildi
 - [x] Railway'de deploy edildi
 - [x] Domain: leohoca-production.up.railway.app
 - [ ] **GROQ_API_KEY** eklendi (Variables)
+- [ ] **ADMIN_EMAIL**, **ADMIN_PASSWORD**, **JWT_SECRET** (admin paneli)
 - [ ] **LEOHOCA_PASSWORD** (opsiyonel - şifre koruması)
 
 ---

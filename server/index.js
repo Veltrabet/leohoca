@@ -43,23 +43,9 @@ ai.initAI();
 app.use(cors);
 app.use(express.json());
 
-// API: Auth - şifre kontrolü
-app.post('/api/auth', (req, res) => {
-  const pwd = process.env.LEOHOCA_PASSWORD;
-  if (!pwd || pwd.trim() === '') {
-    return res.json({ ok: true });
-  }
-  const { password } = req.body || {};
-  if (password === pwd) {
-    return res.json({ ok: true });
-  }
-  res.status(401).json({ ok: false });
-});
-
-// API: Şifre gerekli mi?
-app.get('/api/auth/required', (req, res) => {
-  res.json({ required: !!(process.env.LEOHOCA_PASSWORD && process.env.LEOHOCA_PASSWORD.trim()) });
-});
+// API routes (auth, feedback, admin)
+const routes = require('./routes');
+app.use('/api', routes);
 
 // Serve static client files
 app.use(express.static(path.join(__dirname, '../client')));
@@ -149,14 +135,13 @@ wss.on('connection', (ws, req) => {
           ws.send(JSON.stringify({ type: 'interrupt_ack' }));
           break;
 
-        case 'set_language':
-          const hadMessages = (require('./memory').getConversationHistory(sessionId) || []).length > 0;
-          setPreferredLanguage(sessionId, msg.lang);
-          ws.send(JSON.stringify({ type: 'language_set', lang: msg.lang }));
-          if (!hadMessages) {
-            ws.send(JSON.stringify({ type: 'greeting', greeting: ai.getGreeting(msg.lang) }));
-          }
+        case 'set_language': {
+          const lang = (msg.lang === 'sq-AL' || msg.lang === 'tr-TR') ? msg.lang : 'sq-AL';
+          setPreferredLanguage(sessionId, lang);
+          ws.send(JSON.stringify({ type: 'language_set', lang }));
+          ws.send(JSON.stringify({ type: 'greeting', greeting: ai.getGreeting(lang) }));
           break;
+        }
 
         default:
           ws.send(JSON.stringify({ type: 'error', message: 'Unknown message type' }));

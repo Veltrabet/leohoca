@@ -50,9 +50,18 @@ function initAI() {
 function buildMessages(sessionId, userMessage) {
   const history = getConversationHistory(sessionId);
   const preferredLang = getPreferredLanguage(sessionId);
+  let featureOverrides = '';
+  try {
+    const settings = require('./settings');
+    const flags = settings.getFeatureFlags();
+    if (!flags.visual) featureOverrides += '\n- Görsel özellikler KAPALI: Resim, logo, UI tasarım konularında yardımcı olma.';
+    if (!flags.tech) featureOverrides += '\n- Teknik destek KAPALI: Kod, PHP, Node.js, database konularında yardımcı olma.';
+    if (!flags.business) featureOverrides += '\n- İş/girişim KAPALI: İş planı, pazarlama, marka konularında yardımcı olma.';
+    if (featureOverrides) featureOverrides = '\n\nKAPALI ÖZELLİKLER (bunlarda yardım etme):' + featureOverrides;
+  } catch (_) {}
   
   const systemPrompt = persona.systemPrompt + 
-    `\n\nÖNEMLİ: Kullanıcı ${preferredLang === 'sq-AL' ? 'Arnavutça' : 'Türkçe'} seçti. SADECE ${preferredLang === 'sq-AL' ? 'Arnavutça' : 'Türkçe'} cevap ver.`;
+    `\n\nÖNEMLİ: Kullanıcı ${preferredLang === 'sq-AL' ? 'Arnavutça' : 'Türkçe'} seçti. SADECE ${preferredLang === 'sq-AL' ? 'Arnavutça' : 'Türkçe'} cevap ver.${preferredLang === 'sq-AL' ? ' Arnavutça gramer, yazım ve ifade kusursuz olsun.' : ''}` + featureOverrides;
   
   const messages = [
     { role: 'system', content: systemPrompt }
@@ -72,7 +81,7 @@ function detectLanguage(text) {
   if (!text || !text.trim()) return 'tr-TR';
   const t = text.trim();
   const turkishIndicators = /[ğüşıöçĞÜŞİÖÇ]|merhaba|teşekkür|nasıl|var mı|yok mu|evet|hayır|için|ile|bunu|şu|bunlar|türkçe|neden|ne zaman|nerede|kim|hangi|bana|yardım|lütfen|olur mu|olabilir mi|yapabilir|bilir misin|söyler misin|açıklar mısın/i;
-  const albanianIndicators = /[ë]|përshëndetje|faleminderit|si jeni|si je|po|jo|për|me|ky|kjo|ato|shqip|shqiptar|pse|kur|ku|kush|cila|më ndihmo|ju lutem|mund të|a mund|a dini|a më thoni|a më shpjegoni|faleminderit|mirëmëngjes|mirëdita|natën e mirë/i;
+  const albanianIndicators = /[ë]|përshëndetje|faleminderit|si jeni|si je|po|jo|për|me|ky|kjo|ato|shqip|shqiptar|pse|kur|ku|kush|cila|më ndihmo|ju lutem|mund të|a mund|a dini|a më thoni|a më shpjegoni|mirëmëngjes|mirëdita|natën e mirë|leogpt|shkruani|bisedoni|dërgo|zgjidhni/i;
   const albanianScore = (t.match(albanianIndicators) || []).length;
   const turkishScore = (t.match(turkishIndicators) || []).length;
   if (albanianScore > turkishScore) return 'sq-AL';
@@ -183,7 +192,7 @@ async function streamWithOpenAI(messages, onChunk, onComplete) {
       model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
       messages,
       stream: true,
-      max_tokens: 500,
+      max_tokens: 1000,
       temperature: 0.8
     });
     let fullResponse = '';

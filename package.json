@@ -1,11 +1,17 @@
 {
   "name": "leohoca",
   "version": "1.0.0",
-  "description": "LeoHoca - Real-time Voice AI Assistant",
+  "description": "LeoGPT - AI Asistan",
   "private": true,
   "scripts": {
     "start": "cd server && node index.js",
     "icons": "node scripts/generate-icons.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.6.0",
+    "bcrypt": "^5.1.1",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1"
   },
   "devDependencies": {
     "sharp": "^0.33.2"

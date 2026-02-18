@@ -1,7 +1,7 @@
 {
-  "name": "LeoHoca - Voice AI Assistant",
-  "short_name": "LeoHoca",
-  "description": "Real-time voice AI assistant for Turkish and Albanian. Helps with software, projects, and business ideas.",
+  "name": "LeoGPT - AI Asistan",
+  "short_name": "LeoGPT",
+  "description": "Zeka, ses, sohbet ve teknik destek. Türkçe ve Arnavutça. Kod, resim fikirleri, iş planı.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f0f1a",

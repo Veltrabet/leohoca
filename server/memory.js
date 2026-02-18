@@ -28,7 +28,7 @@ function getOrCreateSession(sessionId) {
       messages: [],
       lastActivity: Date.now(),
       detectedLanguage: null,
-      preferredLanguage: 'tr-TR'
+      preferredLanguage: 'sq-AL'
     };
     sessions.set(sessionId, session);
   }
@@ -68,13 +68,13 @@ function getDetectedLanguage(sessionId) {
 
 function setPreferredLanguage(sessionId, lang) {
   const session = getOrCreateSession(sessionId);
-  session.preferredLanguage = lang === 'sq-AL' ? 'sq-AL' : 'tr-TR';
+  session.preferredLanguage = (lang === 'sq-AL' || lang === 'tr-TR') ? lang : 'sq-AL';
   return session;
 }
 
 function getPreferredLanguage(sessionId) {
   const session = getSession(sessionId);
-  return session?.preferredLanguage || 'tr-TR';
+  return session?.preferredLanguage || 'sq-AL';
 }
 
 function clearSession(sessionId) {

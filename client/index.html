@@ -4,10 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#0c1222">
-  <meta name="description" content="Leo - Arkadaş gibi yapay zeka asistanı">
+  <meta name="description" content="LeoGPT - Zeka, ses, sohbet ve teknik destek özellikli yapay zeka asistanı">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Leo - AI Arkadaş</title>
+  <title>LeoGPT - AI Asistan</title>
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -19,7 +19,7 @@
 <body>
   <div id="passwordOverlay" class="overlay" style="display:none">
     <div class="overlay-box">
-      <h2>Leo</h2>
+      <h2>LeoGPT</h2>
       <p>Erişim için şifre girin</p>
       <input type="password" id="passwordInput" placeholder="Şifre" autocomplete="off" />
       <p class="error-msg" id="passwordError"></p>
@@ -28,7 +28,7 @@
   </div>
   <div id="setupOverlay" class="overlay" style="display:none">
     <div class="overlay-box">
-      <h2>Leo Kurulum</h2>
+      <h2>LeoGPT Kurulum</h2>
       <p>Backend bağlantısı için Railway URL'si gerekli.</p>
       <ol class="setup-steps">
         <li><a href="https://railway.app" target="_blank">railway.app</a> → GitHub ile deploy edin</li>
@@ -44,18 +44,22 @@
       <div class="logo">
         <div class="logo-avatar">L</div>
         <div>
-          <h1>Leo</h1>
-          <span class="tagline">Arkadaşın gibi burada</span>
+          <h1>LeoGPT</h1>
+          <span class="tagline">Si shoku juaj këtu</span>
         </div>
       </div>
       <div class="header-right">
+        <a href="admin.html" class="user-link admin-link" id="adminLink" style="display:none">Admin</a>
+        <a href="auth.html" class="user-link" id="userLink">Hyr</a>
+        <span class="user-name" id="userName" style="display:none"></span>
+        <button class="logout-btn" id="logoutBtn" style="display:none" title="Dilni">✕</button>
         <div class="lang-tabs">
-          <button class="lang-tab active" data-lang="tr-TR">TR</button>
-          <button class="lang-tab" data-lang="sq-AL">SQ</button>
+          <button class="lang-tab" data-lang="tr-TR">TR</button>
+          <button class="lang-tab active" data-lang="sq-AL">SQ</button>
         </div>
         <div class="status" id="status">
           <span class="status-dot"></span>
-          <span class="status-text">Bağlanıyor</span>
+          <span class="status-text">Duke u lidhur</span>
         </div>
       </div>
     </header>
@@ -64,6 +68,11 @@
       <div class="chat-container">
         <div class="chat-messages" id="transcript"></div>
         <div class="streaming-bubble" id="streamingText"></div>
+        <div class="empty-state" id="emptyState">
+          <div class="empty-icon">💬</div>
+          <p class="empty-title">Bisedoni me LeoGPT</p>
+          <p class="empty-desc">Shkruani më poshtë dhe shtypni Dërgo ose folni me mikrofon</p>
+        </div>
       </div>
 
       <div class="voice-visualizer" id="visualizer" aria-hidden="true">
@@ -76,7 +85,7 @@
 
       <div class="input-area">
         <div class="input-row">
-          <input type="text" id="textInput" placeholder="Buraya yaz veya mikrofonla konuş..." autocomplete="off" />
+          <input type="text" id="textInput" placeholder="Shkruani mesazhin tuaj..." autocomplete="off" />
           <button class="send-btn" id="sendBtn" aria-label="Gönder" title="Gönder">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
@@ -91,7 +100,7 @@
             </svg>
           </button>
         </div>
-        <p class="hint" id="hint">Yazıp Gönder veya mikrofonla konuş — TR/SQ dil seç</p>
+        <p class="hint" id="hint">Shkruani ose folni me mikrofon — zgjidhni TR/SQ</p>
       </div>
     </main>
   </div>
