@@ -60,7 +60,8 @@ function buildMessages(sessionId, userMessage, imageData) {
   } catch (_) {}
   
   const systemPrompt = persona.systemPrompt + 
-    `\n\nÖNEMLİ - DİL: Kullanıcı hangi dilde yazarsa O DİLDE cevap ver. Türkçe yazdıysa Türkçe, Arnavutça yazdıysa Arnavutça, İngilizce yazdıysa İngilizce, vs. Mesajın dilini otomatik algıla ve aynı dilde yanıtla. Ana dil seçimi yok - her zaman kullanıcının yazdığı dilde cevap ver.` + featureOverrides;
+    `\n\nÖNEMLİ - DİL: Kullanıcı hangi dilde yazarsa O DİLDE cevap ver. Türkçe yazdıysa Türkçe, Arnavutça yazdıysa Arnavutça, İngilizce yazdıysa İngilizce, vs. Mesajın dilini otomatik algıla ve aynı dilde yanıtla. Ana dil seçimi yok - her zaman kullanıcının yazdığı dilde cevap ver.
+ARNAVUTÇA ÖZEL: Arnavutça cevap verirken gjuha letrare standart kullan. ë, ç, dh, th, zh harflerini doğru yaz. Gramer kusursuz olsun (p.sh. "Si je?" "Si jeni?" - resmi/arkadaş tonuna göre). Asla Türkçe veya İngilizce kelime karıştırma.` + featureOverrides;
   
   const messages = [
     { role: 'system', content: systemPrompt }

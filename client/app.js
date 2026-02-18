@@ -518,8 +518,11 @@
   function getVoiceForLang(lang) {
     const voices = synthesis.getVoices();
     const code = (lang || '').split('-')[0];
-    const preferred = voices.find((v) => v.lang.startsWith(code) || v.lang === 'sq-AL' || v.lang === 'sq');
-    const fallbackCode = code === 'sq' ? 'en' : 'tr';
+    const langTag = (lang || '').toLowerCase();
+    const albanian = voices.find((v) => v.lang.toLowerCase().startsWith('sq') || v.lang === 'sq-AL' || v.name.toLowerCase().includes('albanian'));
+    if (albanian) return albanian;
+    const preferred = voices.find((v) => v.lang.startsWith(code) || v.lang === langTag);
+    const fallbackCode = code === 'sq' ? 'en' : (code === 'tr' ? 'tr' : 'en');
     const fallback = voices.find((v) => v.lang.startsWith(fallbackCode))
       || voices.find((v) => v.lang.startsWith('en'))
       || voices[0];
@@ -532,8 +535,8 @@
     stopSpeaking();
     const useLang = lang || lastDetectedLang;
     const utterance = new SpeechSynthesisUtterance(text.trim());
-    utterance.lang = useLang;
-    utterance.rate = useLang === 'sq-AL' ? 0.92 : 1.0;
+    utterance.lang = useLang.startsWith('sq') ? 'sq-AL' : useLang;
+    utterance.rate = useLang.startsWith('sq') ? 0.88 : (useLang.startsWith('tr') ? 0.95 : 1.0);
     utterance.pitch = 1.0;
     utterance.volume = 1.0;
 
