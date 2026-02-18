@@ -60,8 +60,11 @@ function buildMessages(sessionId, userMessage, imageData) {
   } catch (_) {}
   
   const systemPrompt = persona.systemPrompt + 
-    `\n\nÖNEMLİ - DİL: Kullanıcı hangi dilde yazarsa O DİLDE cevap ver. Türkçe yazdıysa Türkçe, Arnavutça yazdıysa Arnavutça, İngilizce yazdıysa İngilizce, vs. Mesajın dilini otomatik algıla ve aynı dilde yanıtla. Ana dil seçimi yok - her zaman kullanıcının yazdığı dilde cevap ver.
-ARNAVUTÇA ÖZEL: Arnavutça cevap verirken gjuha letrare standart kullan. ë, ç, dh, th, zh harflerini doğru yaz. Gramer kusursuz olsun (p.sh. "Si je?" "Si jeni?" - resmi/arkadaş tonuna göre). Asla Türkçe veya İngilizce kelime karıştırma.` + featureOverrides;
+    `\n\nÖNEMLİ KURALLAR:
+1. DİL: Kullanıcı hangi dilde yazarsa O DİLDE cevap ver. Türkçe→Türkçe, Arnavutça→Arnavutça, İngilizce→İngilizce.
+2. CEVAP: Soruya doğrudan cevap ver. Konudan sapma. Kısa ve net ol. Gereksiz uzatma.
+3. ARNAVUTÇA: Gjuha letrare, ë ç dh th zh doğru. Gramer kusursuz.
+4. ASLA: Rastgele, ilgisiz veya saçma cevap verme. Anlamadıysan "Ne demek istediğinizi açıklar mısınız?" de.` + featureOverrides;
   
   const messages = [
     { role: 'system', content: systemPrompt }
@@ -99,8 +102,8 @@ async function streamWithGroq(messages, onChunk, onComplete) {
       model: GROQ_MODEL,
       messages: groqMessages,
       stream: true,
-      max_tokens: 1000,
-      temperature: 0.8
+      max_tokens: 1024,
+      temperature: 0.4
     });
     let fullResponse = '';
     for await (const chunk of stream) {
@@ -122,7 +125,8 @@ async function streamWithGemini(messages, onChunk, onComplete) {
   try {
     const model = geminiClient.getGenerativeModel({
       model: 'gemini-1.5-flash',
-      systemInstruction: messages.find((m) => m.role === 'system')?.content
+      systemInstruction: messages.find((m) => m.role === 'system')?.content,
+      generationConfig: { temperature: 0.4, maxOutputTokens: 1024 }
     });
     const chatHistory = messages.filter((m) => m.role !== 'system');
     const lastMsg = chatHistory.pop();
@@ -215,8 +219,8 @@ async function streamWithOpenAI(messages, onChunk, onComplete) {
       model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
       messages: openAIMessages,
       stream: true,
-      max_tokens: 1000,
-      temperature: 0.8
+      max_tokens: 1024,
+      temperature: 0.4
     });
     let fullResponse = '';
     for await (const chunk of stream) {
