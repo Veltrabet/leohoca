@@ -15,8 +15,9 @@
 
   function needsSetup() {
     if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') return false;
-    const b = getBackend();
-    return !b || b === location.origin;
+    if (location.hostname.includes('railway.app')) return false;
+    const stored = localStorage.getItem('leohoca_backend') || (typeof LEOHOCA_BACKEND !== 'undefined' && LEOHOCA_BACKEND && String(LEOHOCA_BACKEND).trim());
+    return !stored;
   }
 
   const BACKEND = getBackend();
