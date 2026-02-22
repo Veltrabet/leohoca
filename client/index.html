@@ -76,7 +76,29 @@
           <button class="sidebar-btn voice-toggle" id="voiceToggle" title="Zë">
             <span class="icon">🔊</span>
           </button>
+          <button class="sidebar-btn voice-settings-btn" id="voiceSettingsBtn" title="Ses ayarları">⚙️</button>
           <a href="admin.html" class="sidebar-btn admin-link" id="adminLink" style="display:none">Admin</a>
+        </div>
+        <div class="voice-settings-popover" id="voiceSettingsPopover" style="display:none">
+          <div class="voice-setting-row">
+            <label data-i18n="voiceType">Ses tipi</label>
+            <select id="voiceGenderSelect">
+              <option value="female" data-i18n="voiceFemale">Kadın</option>
+              <option value="male" data-i18n="voiceMale">Erkek</option>
+              <option value="auto" data-i18n="voiceAuto">Otomatik</option>
+            </select>
+          </div>
+          <div class="voice-setting-row">
+            <label data-i18n="voiceSelect">Ses seç</label>
+            <select id="voiceSelect">
+              <option value="">— Otomatik —</option>
+            </select>
+          </div>
+          <div class="voice-setting-row">
+            <label data-i18n="voiceSpeed">Ses hızı</label>
+            <input type="range" id="voiceRateSlider" min="0.7" max="1.2" step="0.05" value="0.9" />
+            <span id="voiceRateValue">0.9</span>
+          </div>
         </div>
         <p class="copyright">© Leohoca</p>
       </div>

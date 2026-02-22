@@ -58,7 +58,13 @@
       wrongPassword: 'Wrong password',
       connectionError: 'Connection error',
       invalidUrl: 'Enter a valid URL (must start with https://)',
-      speechNotSupported: 'Speech recognition not supported. Try Chrome.'
+      speechNotSupported: 'Speech recognition not supported. Try Chrome.',
+      voiceSpeed: 'Voice speed',
+      voiceType: 'Voice type',
+      voiceFemale: 'Female',
+      voiceMale: 'Male',
+      voiceAuto: 'Auto',
+      voiceSelect: 'Select voice'
     },
     'tr-TR': {
       statusConnecting: 'Bağlanıyor',
@@ -91,7 +97,13 @@
       copyBtn: 'Kopyala',
       copied: 'Kopyalandı!',
       listen: 'Dinle',
-      speechNotSupported: 'Ses tanıma desteklenmiyor. Chrome kullanın.'
+      speechNotSupported: 'Ses tanıma desteklenmiyor. Chrome kullanın.',
+      voiceSpeed: 'Ses hızı',
+      voiceType: 'Ses tipi',
+      voiceFemale: 'Kadın',
+      voiceMale: 'Erkek',
+      voiceAuto: 'Otomatik',
+      voiceSelect: 'Ses seç'
     },
     'sq-AL': {
       statusConnecting: 'Duke u lidhur',
@@ -124,7 +136,13 @@
       copyBtn: 'Kopjo',
       copied: 'U kopjua!',
       listen: 'Dëgjoni',
-      speechNotSupported: 'Njohja e zërit nuk mbështetet. Provoni Chrome.'
+      speechNotSupported: 'Njohja e zërit nuk mbështetet. Provoni Chrome.',
+      voiceSpeed: 'Shpejtësia e zërit',
+      voiceType: 'Lloji i zërit',
+      voiceFemale: 'Femër',
+      voiceMale: 'Mashkull',
+      voiceAuto: 'Automatik',
+      voiceSelect: 'Zgjidhni zërin'
     }
   };
 
@@ -515,18 +533,45 @@
     }
   }
 
+  const FEMALE_VOICE_NAMES = /samantha|karen|moira|fiona|victoria|emma|melina|milena|yelda|zira|aylin|filiz|zeina|amazon|female|woman|kadın|kadin|femëror|google.*female|female.*english|susan|anna|helen|kate|sarah|lucy|emily|sabina|maria|elena/i;
+  const MALE_VOICE_NAMES = /alex|daniel|david|tom|mark|ralph|fred|paul|george|microsoft\s*david|male|man|erkek|mashkull|google.*male|male.*english|james|nick|harry|oliver|peter|steve|william|adam|brian/i;
+
+  function voiceGender(n) {
+    const name = (n || '').toLowerCase();
+    if (FEMALE_VOICE_NAMES.test(name)) return 'female';
+    if (MALE_VOICE_NAMES.test(name)) return 'male';
+    return null;
+  }
+
+  function scoreVoice(v, langCode, preferGender) {
+    const n = (v.name || '').toLowerCase();
+    const l = (v.lang || '').toLowerCase();
+    let score = 0;
+    if (l.startsWith(langCode)) score += 100;
+    if (v.localService) score += 50;
+    if (/enhanced|premium|natural|neural|wave/i.test(n)) score += 40;
+    if (/google|microsoft|samantha|alex|karen|daniel|moira|fiona|yelda|melina|milena/i.test(n)) score += 30;
+    if (/compact|basic|system\s/i.test(n)) score -= 30;
+    if (preferGender) {
+      const g = voiceGender(n);
+      if (g === preferGender) score += 60;
+      else if (g && g !== preferGender) score -= 40;
+    }
+    return score;
+  }
+
   function getVoiceForLang(lang) {
     const voices = synthesis.getVoices();
     const code = (lang || '').split('-')[0];
     const langTag = (lang || '').toLowerCase();
+    const saved = localStorage.getItem('leohoca_voice_gender');
+    const preferGender = saved === 'auto' ? null : (saved === 'male' ? 'male' : 'female');
     const albanian = voices.find((v) => v.lang.toLowerCase().startsWith('sq') || v.lang === 'sq-AL' || v.name.toLowerCase().includes('albanian'));
     if (albanian) return albanian;
-    const preferred = voices.find((v) => v.lang.startsWith(code) || v.lang === langTag);
-    const fallbackCode = code === 'sq' ? 'en' : (code === 'tr' ? 'tr' : 'en');
-    const fallback = voices.find((v) => v.lang.startsWith(fallbackCode))
-      || voices.find((v) => v.lang.startsWith('en'))
-      || voices[0];
-    return preferred || fallback;
+    const matching = voices.filter((v) => v.lang.startsWith(code) || v.lang === langTag);
+    const sorted = matching.length ? matching : voices.filter((v) => v.lang.startsWith('en') || v.lang.startsWith('tr'));
+    const best = [...sorted].sort((a, b) => scoreVoice(b, code, preferGender) - scoreVoice(a, code, preferGender))[0];
+    return best || voices.find((v) => v.lang.startsWith('en')) || voices[0];
   }
 
   function speak(text, lang) {
@@ -536,11 +581,18 @@
     const useLang = lang || lastDetectedLang;
     const utterance = new SpeechSynthesisUtterance(text.trim());
     utterance.lang = useLang.startsWith('sq') ? 'sq-AL' : useLang;
-    utterance.rate = useLang.startsWith('sq') ? 0.88 : (useLang.startsWith('tr') ? 0.95 : 1.0);
+    const savedRate = parseFloat(localStorage.getItem('leohoca_voice_rate'));
+    utterance.rate = (savedRate >= 0.5 && savedRate <= 1.5) ? savedRate : 0.9;
     utterance.pitch = 1.0;
     utterance.volume = 1.0;
 
-    const voice = getVoiceForLang(useLang);
+    const forcedVoice = localStorage.getItem('leohoca_voice_name');
+    let voice = null;
+    if (forcedVoice) {
+      const voices = synthesis.getVoices();
+      voice = voices.find((v) => v.name === forcedVoice);
+    }
+    if (!voice) voice = getVoiceForLang(useLang);
     if (voice) utterance.voice = voice;
 
     utterance.onstart = () => { isSpeaking = true; };
@@ -566,6 +618,65 @@
     elements.voiceToggle.title = autoSpeak ? 'Voice on' : 'Click 🔊 on message to listen';
   });
   if (elements.voiceToggle) elements.voiceToggle.textContent = autoSpeak ? '🔊' : '🔇';
+
+  const voiceSettingsBtn = document.getElementById('voiceSettingsBtn');
+  const voiceSettingsPopover = document.getElementById('voiceSettingsPopover');
+  const voiceRateSlider = document.getElementById('voiceRateSlider');
+  const voiceRateValue = document.getElementById('voiceRateValue');
+  const voiceGenderSelect = document.getElementById('voiceGenderSelect');
+  const voiceSelect = document.getElementById('voiceSelect');
+  function populateVoiceSelect() {
+    if (!voiceSelect) return;
+    const voices = synthesis.getVoices();
+    const current = voiceSelect.value;
+    voiceSelect.innerHTML = '<option value="">— ' + t('voiceAuto') + ' —</option>';
+    const trEn = voices.filter((v) => /^(tr|en)/i.test(v.lang));
+    (trEn.length ? trEn : voices).forEach((v) => {
+      const opt = document.createElement('option');
+      opt.value = v.name;
+      opt.textContent = v.name + ' (' + v.lang + ')';
+      voiceSelect.appendChild(opt);
+    });
+    if (current) voiceSelect.value = current;
+  }
+  if (voiceSettingsBtn && voiceSettingsPopover && voiceRateSlider) {
+    synthesis.addEventListener('voiceschanged', populateVoiceSelect);
+    if (synthesis.getVoices().length) populateVoiceSelect();
+    const savedRate = parseFloat(localStorage.getItem('leohoca_voice_rate'));
+    if (savedRate >= 0.5 && savedRate <= 1.5) {
+      voiceRateSlider.value = savedRate;
+      if (voiceRateValue) voiceRateValue.textContent = savedRate.toFixed(2);
+    }
+    const savedGender = localStorage.getItem('leohoca_voice_gender') || 'female';
+    if (voiceGenderSelect) {
+      voiceGenderSelect.value = savedGender;
+      voiceGenderSelect.addEventListener('change', () => {
+        localStorage.setItem('leohoca_voice_gender', voiceGenderSelect.value);
+      });
+    }
+    const savedVoice = localStorage.getItem('leohoca_voice_name');
+    if (voiceSelect) {
+      if (savedVoice) voiceSelect.value = savedVoice;
+      voiceSelect.addEventListener('change', () => {
+        localStorage.setItem('leohoca_voice_name', voiceSelect.value || '');
+      });
+    }
+    voiceSettingsBtn.addEventListener('click', () => {
+      const visible = voiceSettingsPopover.style.display === 'flex';
+      voiceSettingsPopover.style.display = visible ? 'none' : 'flex';
+      if (!visible) populateVoiceSelect();
+    });
+    voiceRateSlider.addEventListener('input', () => {
+      const v = parseFloat(voiceRateSlider.value);
+      localStorage.setItem('leohoca_voice_rate', String(v));
+      if (voiceRateValue) voiceRateValue.textContent = v.toFixed(2);
+    });
+    document.addEventListener('click', (e) => {
+      if (voiceSettingsPopover.style.display === 'flex' && !voiceSettingsPopover.contains(e.target) && e.target !== voiceSettingsBtn) {
+        voiceSettingsPopover.style.display = 'none';
+      }
+    });
+  }
 
   elements.imgBtn?.addEventListener('click', () => elements.imageInput?.click());
   elements.imageInput?.addEventListener('change', (e) => {

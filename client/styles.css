@@ -421,12 +421,65 @@ body {
 .sidebar-footer {
   padding: 1rem;
   border-top: 1px solid var(--border);
+  position: relative;
 }
 
 .settings-group {
   display: flex;
   gap: 0.5rem;
   align-items: center;
+}
+
+.voice-settings-popover {
+  position: absolute;
+  bottom: 100%;
+  left: 1rem;
+  right: 1rem;
+  margin-bottom: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.voice-setting-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.voice-setting-row label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.voice-settings-popover label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.voice-settings-popover select {
+  padding: 0.4rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-primary);
+  color: var(--text);
+  font-size: 0.85rem;
+  max-height: 120px;
+}
+
+.voice-settings-popover input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.voice-settings-popover #voiceRateValue {
+  font-size: 0.75rem;
+  color: var(--text-muted);
 }
 
 .sidebar-footer .sidebar-btn {
