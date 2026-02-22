@@ -4,6 +4,20 @@ Kayıt, giriş, geri bildirim ve admin paneli dahil tam kurulum.
 
 ---
 
+## ⚡ En Kritik — 3 Adımda Çalıştır
+
+| # | Ne yap | Nerede |
+|---|--------|---------|
+| 1 | **GROQ_API_KEY** ekle | https://console.groq.com → API Keys |
+| 2 | `server/.env` oluştur → `GROQ_API_KEY=gsk_xxx` yaz | Yerel |
+| 3 | `npm start` → http://localhost:3000 | Terminal |
+
+**Railway için:** Variables'a `GROQ_API_KEY` ekle → push → deploy otomatik.
+
+> AI çalışmazsa = API key yok veya yanlış. Bu tek zorunlu değişken.
+
+---
+
 ## 1. Yerel Bilgisayarda Kurulum
 
 ### Adım 1: Bağımlılıkları yükle
@@ -76,6 +90,9 @@ git push
 | Name | Value |
 |------|-------|
 | `LEOHOCA_PASSWORD` | Uygulama şifresi (boş bırakırsanız şifre istenmez) |
+| `META_APP_ID` | Instagram API (Meta for Developers) |
+| `META_APP_SECRET` | Instagram API |
+| `INSTAGRAM_REDIRECT_URI` | https://siteniz.com/api/instagram/callback |
 
 ### Adım 3: Deploy
 

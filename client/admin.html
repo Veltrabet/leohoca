@@ -85,6 +85,14 @@
       </div>
 
       <div class="admin-section">
+        <h2>📱 Instagram Hesapları</h2>
+        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem">Bağlı hesaplar sohbet üzerinden istatistik sorgulanabilir. Şifre/token asla sohbette gösterilmez.</p>
+        <div id="igConfigMsg" style="margin-bottom:0.75rem; padding:0.5rem; border-radius:6px; display:none"></div>
+        <button class="btn" id="igConnectBtn" style="margin-bottom:1rem">+ Hesap Bağla</button>
+        <table id="igAccountsTable"><thead><tr><th>@username</th><th>Eklenme</th><th>Son sync</th><th></th></tr></thead><tbody></tbody></table>
+      </div>
+
+      <div class="admin-section">
         <h2>📤 Resim Yükle</h2>
         <input type="file" id="fileUpload" accept="image/*" />
         <button class="btn" id="uploadBtn" style="margin-top:0.5rem">Yükle</button>
@@ -157,7 +165,57 @@
       showLogin();
     });
 
+    function handleIgCallback() {
+      const params = new URLSearchParams(location.search);
+      const ok = params.get('ig_ok');
+      const err = params.get('ig_error');
+      if (ok) { alert('Instagram hesabı bağlandı: @' + ok); history.replaceState({}, '', location.pathname); }
+      if (err) { alert('Instagram hatası: ' + err); history.replaceState({}, '', location.pathname); }
+    }
+
+    async function loadIgAccounts() {
+      const cfgRes = await api('/api/instagram/configured');
+      const cfg = await cfgRes.json();
+      const msgEl = document.getElementById('igConfigMsg');
+      const btn = document.getElementById('igConnectBtn');
+      if (!cfg.configured) {
+        msgEl.style.display = 'block';
+        msgEl.style.background = '#fef3c7';
+        msgEl.textContent = 'META_APP_ID, META_APP_SECRET, INSTAGRAM_REDIRECT_URI ekleyin (.env)';
+        btn.disabled = true;
+        return;
+      }
+      msgEl.style.display = 'none';
+      btn.disabled = false;
+      btn.onclick = async () => {
+        const r = await api('/api/instagram/connect');
+        const d = await r.json();
+        if (d.url) window.location.href = d.url;
+        else alert(d.error || 'Bağlantı alınamadı');
+      };
+      const r = await api('/api/admin/instagram/accounts');
+      const d = await r.json();
+      const tbody = document.querySelector('#igAccountsTable tbody');
+      if (d.ok && d.accounts?.length) {
+        tbody.innerHTML = d.accounts.map(a => `
+          <tr>
+            <td><strong>@${a.username}</strong></td>
+            <td>${new Date(a.created_at).toLocaleDateString()}</td>
+            <td>${a.last_sync_at ? new Date(a.last_sync_at).toLocaleString() : '-'}</td>
+            <td><button class="content-item button" style="padding:0.25rem 0.5rem; font-size:0.8rem" onclick="delIgAccount(${a.id})">Sil</button></td>
+          </tr>
+        `).join('');
+      } else tbody.innerHTML = '<tr><td colspan="4">Henüz hesap yok.</td></tr>';
+    }
+
+    async function delIgAccount(id) {
+      if (!confirm('Bu hesabı kaldırmak istediğinize emin misiniz?')) return;
+      await api('/api/admin/instagram/accounts/' + id, { method: 'DELETE' });
+      loadIgAccounts();
+    }
+
     async function loadData() {
+      handleIgCallback();
       const [fbRes, setRes, contentRes, usersRes] = await Promise.all([
         api('/api/admin/feedback'),
         api('/api/admin/settings'),
@@ -204,6 +262,7 @@
           `<tr><td>${u.id}</td><td>${u.email}</td><td>${u.name || '-'}</td><td>${u.is_admin ? '✓' : '-'}</td><td>${new Date(u.created_at).toLocaleDateString()}</td></tr>`
         ).join('');
       }
+      loadIgAccounts();
     }
 
     async function delContent(type, key) {

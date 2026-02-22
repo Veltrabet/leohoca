@@ -155,4 +155,61 @@ router.post('/admin/upload', auth.requireAuth, auth.requireAdmin, upload.single(
   res.json({ ok: true, url });
 });
 
+// --- Instagram (admin: hesap ekleme, public: stats için API) ---
+const ig = require('./instagram');
+
+router.get('/instagram/connect', auth.requireAuth, auth.requireAdmin, (req, res) => {
+  if (!ig.isConfigured()) return res.status(503).json({ ok: false, error: 'Instagram API yapılandırılmamış. META_APP_ID, META_APP_SECRET, INSTAGRAM_REDIRECT_URI ekleyin.' });
+  const url = ig.getConnectUrl();
+  if (!url) return res.status(503).json({ ok: false, error: 'OAuth URL oluşturulamadı' });
+  res.json({ ok: true, url });
+});
+
+router.get('/instagram/callback', async (req, res) => {
+  const { code, state, error } = req.query;
+  const adminUrl = req.protocol + '://' + req.get('host') + '/admin.html';
+  if (error) return res.redirect(adminUrl + '?ig_error=' + encodeURIComponent(error));
+  if (!code) return res.redirect(adminUrl + '?ig_error=code_yok');
+  try {
+    const data = await ig.exchangeCodeForToken(code);
+    const longToken = await ig.getLongLivedToken(data.access_token).catch(() => data.access_token);
+    const userInfo = await ig.getIgUserInfo(longToken);
+    const tokenToStore = longToken || data.access_token;
+    const encrypted = ig.encryptToken(tokenToStore);
+    db.prepare('INSERT OR REPLACE INTO instagram_accounts (username, instagram_user_id, access_token, last_sync_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)')
+      .run(userInfo.username, userInfo.id, encrypted);
+    res.redirect(adminUrl + '?ig_ok=' + encodeURIComponent(userInfo.username));
+  } catch (e) {
+    console.error('Instagram callback:', e);
+    res.redirect(adminUrl + '?ig_error=' + encodeURIComponent(e.message || 'Bilinmeyen hata'));
+  }
+});
+
+router.get('/admin/instagram/accounts', auth.requireAuth, auth.requireAdmin, (req, res) => {
+  const rows = db.prepare('SELECT id, username, instagram_user_id, created_at, last_sync_at FROM instagram_accounts ORDER BY username').all();
+  res.json({ ok: true, accounts: rows });
+});
+
+router.delete('/admin/instagram/accounts/:id', auth.requireAuth, auth.requireAdmin, (req, res) => {
+  db.prepare('DELETE FROM instagram_accounts WHERE id = ?').run(req.params.id);
+  res.json({ ok: true });
+});
+
+router.get('/instagram/stats/:username', (req, res) => {
+  const { username } = req.params;
+  const row = db.prepare('SELECT instagram_user_id, access_token FROM instagram_accounts WHERE LOWER(username) = LOWER(?)').get(username);
+  if (!row) return res.status(404).json({ ok: false, error: 'Hesap bulunamadı. Admin panelden ekleyin.' });
+  const token = ig.decryptToken(row.access_token);
+  ig.fetchAccountStats(token, row.instagram_user_id)
+    .then(stats => {
+      db.prepare('UPDATE instagram_accounts SET last_sync_at = CURRENT_TIMESTAMP WHERE instagram_user_id = ?').run(row.instagram_user_id);
+      res.json({ ok: true, username, stats });
+    })
+    .catch(e => res.status(500).json({ ok: false, error: e.message || 'İstatistik alınamadı' }));
+});
+
+router.get('/instagram/configured', (req, res) => {
+  res.json({ configured: ig.isConfigured() });
+});
+
 module.exports = router;

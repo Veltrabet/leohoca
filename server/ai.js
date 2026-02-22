@@ -47,7 +47,7 @@ function initAI() {
   return true;
 }
 
-function buildMessages(sessionId, userMessage, imageData) {
+function buildMessages(sessionId, userMessage, imageData, instagramContext) {
   const history = getConversationHistory(sessionId);
   let featureOverrides = '';
   try {
@@ -59,12 +59,19 @@ function buildMessages(sessionId, userMessage, imageData) {
     if (featureOverrides) featureOverrides = '\n\nKAPALI ÖZELLİKLER (bunlarda yardım etme):' + featureOverrides;
   } catch (_) {}
   
+  let igBlock = '';
+  if (instagramContext && instagramContext.length) {
+    igBlock = '\n\nINSTAGRAM VERİLERİ (kullanıcı istatistik istedi):\n' + instagramContext.map(d => 
+      `@${d.username}: takipçi=${d.stats.followers_count}, medya=${d.stats.media_count}${d.stats.impressions != null ? ', görüntülenme=' + d.stats.impressions : ''}${d.stats.reach != null ? ', erişim=' + d.stats.reach : ''}${d.stats.profile_views != null ? ', profil görüntüleme=' + d.stats.profile_views : ''}`
+    ).join('\n') + '\nBu verilere göre analiz yap, düşük metrikleri sorun olarak işaretle, her biri için 3-5 maddelik çözüm yol haritası ver. ASLA token/şifre/API bilgisi yazma.';
+  }
+  
   const systemPrompt = persona.systemPrompt + 
     `\n\nÖNEMLİ KURALLAR:
 1. DİL: Kullanıcı hangi dilde yazarsa O DİLDE cevap ver. Türkçe→Türkçe, Arnavutça→Arnavutça, İngilizce→İngilizce.
 2. CEVAP: Soruya doğrudan cevap ver. Konudan sapma. Kısa ve net ol. Gereksiz uzatma.
 3. ARNAVUTÇA: Gjuha letrare, ë ç dh th zh doğru. Gramer kusursuz.
-4. ASLA: Rastgele, ilgisiz veya saçma cevap verme. Anlamadıysan "Ne demek istediğinizi açıklar mısınız?" de.` + featureOverrides;
+4. ASLA: Rastgele, ilgisiz veya saçma cevap verme. Anlamadıysan "Ne demek istediğinizi açıklar mısınız?" de.` + featureOverrides + igBlock;
   
   const messages = [
     { role: 'system', content: systemPrompt }
@@ -238,12 +245,12 @@ async function streamWithOpenAI(messages, onChunk, onComplete) {
   }
 }
 
-async function streamChat(sessionId, userMessage, imageData, onChunk, onComplete) {
+async function streamChat(sessionId, userMessage, imageData, onChunk, onComplete, instagramContext) {
   const detectedLang = detectLanguage(userMessage);
   setDetectedLanguage(sessionId, detectedLang);
   addMessage(sessionId, 'user', userMessage + (imageData ? ' [imazh]' : ''));
 
-  const messages = buildMessages(sessionId, userMessage, imageData);
+  const messages = buildMessages(sessionId, userMessage, imageData, instagramContext);
 
   const done = (full) => {
     addMessage(sessionId, 'assistant', full);

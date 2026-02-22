@@ -88,3 +88,14 @@ TR/SQ/EN için dil + cinsiyet + duygu profilleri:
 - **Sakin** (calm)
 
 Emoji kaldırma, kod blok kaldırma aktif.
+
+---
+
+## 📱 Instagram API (Planlanan)
+
+Sosyal medya uzmanı modu:
+- Admin panelden hesap ekleme (OAuth, şifre sohbette yok)
+- Sohbet: "@hesap istatistikleri" → anlık veri
+- AI: sorun tespiti + çözüm yol haritası
+
+Detay: `INSTAGRAM-ENTEGRASYON.md`

@@ -49,6 +49,16 @@ db.exec(`
 
   CREATE INDEX IF NOT EXISTS idx_feedback_created ON feedback(created_at);
   CREATE INDEX IF NOT EXISTS idx_feedback_rating ON feedback(rating);
+
+  CREATE TABLE IF NOT EXISTS instagram_accounts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT NOT NULL,
+    instagram_user_id TEXT NOT NULL UNIQUE,
+    access_token TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    last_sync_at DATETIME
+  );
+  CREATE INDEX IF NOT EXISTS idx_ig_username ON instagram_accounts(username);
 `);
 
 function initAdmin() {

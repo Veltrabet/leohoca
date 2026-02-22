@@ -32,6 +32,8 @@ function getLocalIP() {
 }
 const ai = require('./ai');
 const { getDetectedLanguage, setPreferredLanguage, getPreferredLanguage } = require('./memory');
+const db = require('./db');
+const ig = require('./instagram');
 
 const app = express();
 const server = http.createServer(app);
@@ -137,6 +139,25 @@ wss.on('connection', (ws, req) => {
 
           ws.send(JSON.stringify({ type: 'ai_start' }));
 
+          let instagramContext = [];
+          const t = (text || '').toLowerCase();
+          const hasIgIntent = /\b(istatistik|istatistikler|instagram|hesap|nasıl gidiyor|özet|performans|takipçi|follower)\b/i.test(t);
+          if (hasIgIntent) {
+            const mentions = (t.match(/@([a-zA-Z0-9_.]+)/g) || []).map(m => m.slice(1));
+            const accounts = db.prepare('SELECT username, instagram_user_id, access_token FROM instagram_accounts').all();
+            const usernames = mentions.length ? mentions.filter(u => accounts.some(a => a.username.toLowerCase() === u.toLowerCase())) : accounts.map(a => a.username);
+            for (const un of usernames.slice(0, 5)) {
+              try {
+                const row = accounts.find(a => a.username.toLowerCase() === un.toLowerCase()) || db.prepare('SELECT instagram_user_id, access_token FROM instagram_accounts WHERE LOWER(username) = LOWER(?)').get(un);
+                if (row) {
+                  const token = ig.decryptToken(row.access_token);
+                  const stats = await ig.fetchAccountStats(token, row.instagram_user_id);
+                  instagramContext.push({ username: un, stats });
+                }
+              } catch (_) {}
+            }
+          }
+
           await ai.streamChat(
             sessionId,
             text || (image ? 'Çfarë shihni në këtë imazh?' : ''),
@@ -154,7 +175,8 @@ wss.on('connection', (ws, req) => {
                   language: getDetectedLanguage(sessionId)
                 }));
               }
-            }
+            },
+            instagramContext
           );
           break;
 
