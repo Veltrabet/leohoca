@@ -66,9 +66,12 @@ app.get('/auth.html', (req, res) => {
 app.get('/api/config', (req, res) => {
   const persona = require('./config/persona.json');
   const voice = require('./config/voice.json');
+  let voicePro = null;
+  try { voicePro = require('./config/voice_pro.json'); } catch (_) {}
   res.json({
     persona,
     voice,
+    voicePro,
     greeting: ai.getGreeting('tr-TR')
   });
 });

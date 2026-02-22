@@ -64,7 +64,15 @@
       voiceFemale: 'Female',
       voiceMale: 'Male',
       voiceAuto: 'Auto',
-      voiceSelect: 'Select voice'
+      voiceSelect: 'Select voice',
+      voicePitch: 'Voice pitch',
+      voiceUsePro: 'Pro voice profile',
+      voiceEmotion: 'Tone / Emotion',
+      emotionFriendly: 'Friendly',
+      emotionProfessional: 'Professional',
+      emotionTeacher: 'Teacher',
+      emotionEnergetic: 'Energetic',
+      emotionCalm: 'Calm'
     },
     'tr-TR': {
       statusConnecting: 'Bağlanıyor',
@@ -103,7 +111,15 @@
       voiceFemale: 'Kadın',
       voiceMale: 'Erkek',
       voiceAuto: 'Otomatik',
-      voiceSelect: 'Ses seç'
+      voiceSelect: 'Ses seç',
+      voicePitch: 'Ses tonu (pitch)',
+      voiceUsePro: 'Pro ses profili',
+      voiceEmotion: 'Ton / Duygu',
+      emotionFriendly: 'Samimi',
+      emotionProfessional: 'Ciddi',
+      emotionTeacher: 'Öğretici',
+      emotionEnergetic: 'Enerjik',
+      emotionCalm: 'Sakin'
     },
     'sq-AL': {
       statusConnecting: 'Duke u lidhur',
@@ -142,7 +158,15 @@
       voiceFemale: 'Femër',
       voiceMale: 'Mashkull',
       voiceAuto: 'Automatik',
-      voiceSelect: 'Zgjidhni zërin'
+      voiceSelect: 'Zgjidhni zërin',
+      voicePitch: 'Toni i zërit',
+      voiceUsePro: 'Profili profesional i zërit',
+      voiceEmotion: 'Toni / Emocioni',
+      emotionFriendly: 'Miqësor',
+      emotionProfessional: 'Profesional',
+      emotionTeacher: 'Mësues',
+      emotionEnergetic: 'Energjik',
+      emotionCalm: 'Qetë'
     }
   };
 
@@ -241,6 +265,7 @@
   let streamedContent = '';
   let userInterrupted = false;
   let autoSpeak = localStorage.getItem('leohoca_autospeak') === '1';
+  let voiceProConfig = null;
 
   const elements = {
     status: document.getElementById('status'),
@@ -560,6 +585,29 @@
     return score;
   }
 
+  function prepareTextForTTS(text) {
+    if (!text || !text.trim()) return '';
+    let s = text.trim();
+    if (voiceProConfig?.voice_system?.emoji_removal) {
+      s = s.replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '');
+    }
+    if (voiceProConfig?.voice_system?.code_block_removal) {
+      s = s.replace(/```[\s\S]*?```/g, ' ');
+      s = s.replace(/`[^`]+`/g, ' ');
+    }
+    return s.replace(/\s+/g, ' ').trim() || text.trim();
+  }
+
+  function getVoiceProParams(lang, gender, emotion) {
+    if (!voiceProConfig?.voice_system?.languages) return null;
+    const code = (lang || '').split('-')[0] || 'en';
+    const langConfig = voiceProConfig.voice_system.languages[code] || voiceProConfig.voice_system.languages.en;
+    const genderConfig = langConfig?.[gender] || langConfig?.female || langConfig?.male;
+    if (!genderConfig) return null;
+    const profile = genderConfig.emotion_profiles?.[emotion] || genderConfig;
+    return { rate: profile.rate, pitch: profile.pitch };
+  }
+
   function getVoiceForLang(lang) {
     const voices = synthesis.getVoices();
     const code = (lang || '').split('-')[0];
@@ -575,15 +623,26 @@
   }
 
   function speak(text, lang) {
-    if (!text || !text.trim()) return;
+    const raw = prepareTextForTTS(text);
+    if (!raw) return;
 
     stopSpeaking();
     const useLang = lang || lastDetectedLang;
-    const utterance = new SpeechSynthesisUtterance(text.trim());
+    const utterance = new SpeechSynthesisUtterance(raw);
     utterance.lang = useLang.startsWith('sq') ? 'sq-AL' : useLang;
-    const savedRate = parseFloat(localStorage.getItem('leohoca_voice_rate'));
-    utterance.rate = (savedRate >= 0.5 && savedRate <= 1.5) ? savedRate : 0.9;
-    utterance.pitch = 1.0;
+    const gender = localStorage.getItem('leohoca_voice_gender') || 'female';
+    const emotion = localStorage.getItem('leohoca_voice_emotion') || 'friendly';
+    const usePro = localStorage.getItem('leohoca_voice_use_pro') !== '0';
+    const proParams = usePro ? getVoiceProParams(useLang, gender === 'auto' ? 'female' : gender, emotion) : null;
+    if (proParams) {
+      utterance.rate = proParams.rate;
+      utterance.pitch = proParams.pitch;
+    } else {
+      const savedRate = parseFloat(localStorage.getItem('leohoca_voice_rate'));
+      utterance.rate = (savedRate >= 0.5 && savedRate <= 1.5) ? savedRate : 0.9;
+      const savedPitch = parseFloat(localStorage.getItem('leohoca_voice_pitch'));
+      utterance.pitch = (savedPitch >= 0.5 && savedPitch <= 2) ? savedPitch : 1.0;
+    }
     utterance.volume = 1.0;
 
     const forcedVoice = localStorage.getItem('leohoca_voice_name');
@@ -654,6 +713,20 @@
         localStorage.setItem('leohoca_voice_gender', voiceGenderSelect.value);
       });
     }
+    const voiceEmotionSelect = document.getElementById('voiceEmotionSelect');
+    if (voiceEmotionSelect) {
+      voiceEmotionSelect.value = localStorage.getItem('leohoca_voice_emotion') || 'friendly';
+      voiceEmotionSelect.addEventListener('change', () => {
+        localStorage.setItem('leohoca_voice_emotion', voiceEmotionSelect.value);
+      });
+    }
+    const voiceUseProCheck = document.getElementById('voiceUseProCheck');
+    if (voiceUseProCheck) {
+      voiceUseProCheck.checked = localStorage.getItem('leohoca_voice_use_pro') !== '0';
+      voiceUseProCheck.addEventListener('change', () => {
+        localStorage.setItem('leohoca_voice_use_pro', voiceUseProCheck.checked ? '1' : '0');
+      });
+    }
     const savedVoice = localStorage.getItem('leohoca_voice_name');
     if (voiceSelect) {
       if (savedVoice) voiceSelect.value = savedVoice;
@@ -671,6 +744,20 @@
       localStorage.setItem('leohoca_voice_rate', String(v));
       if (voiceRateValue) voiceRateValue.textContent = v.toFixed(2);
     });
+    const voicePitchSlider = document.getElementById('voicePitchSlider');
+    const voicePitchValue = document.getElementById('voicePitchValue');
+    if (voicePitchSlider) {
+      const savedPitch = parseFloat(localStorage.getItem('leohoca_voice_pitch'));
+      if (savedPitch >= 0.5 && savedPitch <= 2) {
+        voicePitchSlider.value = savedPitch;
+        if (voicePitchValue) voicePitchValue.textContent = savedPitch.toFixed(1);
+      }
+      voicePitchSlider.addEventListener('input', () => {
+        const v = parseFloat(voicePitchSlider.value);
+        localStorage.setItem('leohoca_voice_pitch', String(v));
+        if (voicePitchValue) voicePitchValue.textContent = v.toFixed(1);
+      });
+    }
     document.addEventListener('click', (e) => {
       if (voiceSettingsPopover.style.display === 'flex' && !voiceSettingsPopover.contains(e.target) && e.target !== voiceSettingsBtn) {
         voiceSettingsPopover.style.display = 'none';
@@ -746,6 +833,7 @@
     updateUI();
     updateUserUI();
     connect();
+    fetch(BACKEND + '/api/config').then(r => r.json()).catch(() => ({})).then(d => { voiceProConfig = d.voicePro || null; });
   }
 
   logoutBtn?.addEventListener('click', () => {

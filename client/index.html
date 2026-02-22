@@ -88,6 +88,20 @@
               <option value="auto" data-i18n="voiceAuto">Otomatik</option>
             </select>
           </div>
+          <div class="voice-setting-row voice-setting-toggle">
+            <label data-i18n="voiceUsePro">Pro ses profili</label>
+            <input type="checkbox" id="voiceUseProCheck" checked />
+          </div>
+          <div class="voice-setting-row">
+            <label data-i18n="voiceEmotion">Ton / Duygu</label>
+            <select id="voiceEmotionSelect">
+              <option value="friendly" data-i18n="emotionFriendly">Samimi</option>
+              <option value="professional" data-i18n="emotionProfessional">Ciddi</option>
+              <option value="teacher" data-i18n="emotionTeacher">Öğretici</option>
+              <option value="energetic" data-i18n="emotionEnergetic">Enerjik</option>
+              <option value="calm" data-i18n="emotionCalm">Sakin</option>
+            </select>
+          </div>
           <div class="voice-setting-row">
             <label data-i18n="voiceSelect">Ses seç</label>
             <select id="voiceSelect">
@@ -98,6 +112,11 @@
             <label data-i18n="voiceSpeed">Ses hızı</label>
             <input type="range" id="voiceRateSlider" min="0.7" max="1.2" step="0.05" value="0.9" />
             <span id="voiceRateValue">0.9</span>
+          </div>
+          <div class="voice-setting-row">
+            <label data-i18n="voicePitch">Ses tonu (pitch)</label>
+            <input type="range" id="voicePitchSlider" min="0.8" max="1.4" step="0.1" value="1" />
+            <span id="voicePitchValue">1.0</span>
           </div>
         </div>
         <p class="copyright">© Leohoca</p>

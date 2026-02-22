@@ -452,6 +452,16 @@ body {
   gap: 0.25rem;
 }
 
+.voice-setting-toggle {
+  flex-direction: row;
+  align-items: center;
+}
+
+.voice-setting-toggle input[type="checkbox"] {
+  margin-left: auto;
+  accent-color: var(--accent);
+}
+
 .voice-setting-row label {
   font-size: 0.8rem;
   color: var(--text-muted);
