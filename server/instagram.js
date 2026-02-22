@@ -39,14 +39,16 @@ async function exchangeCodeForToken(code) {
 }
 
 async function getLongLivedToken(shortToken) {
-  const res = await fetch(`https://graph.instagram.com/access_token?grant_type=ig_exchange_token&client_secret=${META_APP_SECRET}&access_token=${shortToken}`);
+  const clean = String(shortToken || '').trim().replace(/\s+/g, '');
+  const res = await fetch(`https://graph.instagram.com/access_token?grant_type=ig_exchange_token&client_secret=${encodeURIComponent(META_APP_SECRET)}&access_token=${encodeURIComponent(clean)}`);
   const data = await res.json();
   if (data.error) throw new Error(data.error?.message || 'Long-lived token alınamadı');
   return data.access_token;
 }
 
 async function getIgUserInfo(accessToken) {
-  const res = await fetch(`https://graph.instagram.com/me?fields=id,username&access_token=${accessToken}`);
+  const clean = String(accessToken || '').trim().replace(/\s+/g, '');
+  const res = await fetch(`https://graph.instagram.com/me?fields=id,username&access_token=${encodeURIComponent(clean)}`);
   const data = await res.json();
   if (data.error) throw new Error(data.error?.message || 'Kullanıcı bilgisi alınamadı');
   return data;
@@ -70,8 +72,9 @@ function decryptToken(encrypted) {
 }
 
 async function fetchAccountStats(accessToken, igUserId) {
+  const clean = String(accessToken || '').trim().replace(/\s+/g, '');
   const fields = 'followers_count,media_count';
-  const res = await fetch(`https://graph.instagram.com/${igUserId}?fields=${fields}&access_token=${accessToken}`);
+  const res = await fetch(`https://graph.instagram.com/${igUserId}?fields=${fields}&access_token=${encodeURIComponent(clean)}`);
   const basic = await res.json();
   if (basic.error) throw new Error(basic.error?.message || 'İstatistik alınamadı');
 
@@ -79,7 +82,7 @@ async function fetchAccountStats(accessToken, igUserId) {
   try {
     const period = 'day';
     const metrics = 'impressions,reach,profile_views';
-    const ir = await fetch(`https://graph.instagram.com/${igUserId}/insights?metric=${metrics}&period=${period}&access_token=${accessToken}`);
+    const ir = await fetch(`https://graph.instagram.com/${igUserId}/insights?metric=${metrics}&period=${period}&access_token=${encodeURIComponent(clean)}`);
     const idata = await ir.json();
     if (idata.data) insights = Object.fromEntries(idata.data.map(d => [d.name, d.values?.[0]?.value ?? 0]));
   } catch (_) {}

@@ -225,10 +225,12 @@ router.delete('/admin/instagram/accounts/:id', auth.requireAuth, auth.requireAdm
 router.post('/admin/instagram/add-token', auth.requireAuth, auth.requireAdmin, async (req, res) => {
   const { token: accessToken } = req.body;
   if (!accessToken || typeof accessToken !== 'string') return res.status(400).json({ ok: false, error: 'Token gerekli' });
+  const cleanToken = String(accessToken).trim().replace(/\s+/g, '');
+  if (!cleanToken || cleanToken.length < 50) return res.status(400).json({ ok: false, error: 'Token çok kısa veya geçersiz' });
   try {
-    const longToken = await ig.getLongLivedToken(accessToken.trim()).catch(() => accessToken.trim());
+    const longToken = await ig.getLongLivedToken(cleanToken).catch(() => cleanToken);
     const userInfo = await ig.getIgUserInfo(longToken);
-    const tokenToStore = longToken || accessToken.trim();
+    const tokenToStore = longToken || cleanToken;
     const encrypted = ig.encryptToken(tokenToStore);
     db.prepare('INSERT OR REPLACE INTO instagram_accounts (username, instagram_user_id, access_token, last_sync_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)')
       .run(userInfo.username, userInfo.id, encrypted);
