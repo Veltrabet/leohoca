@@ -80,7 +80,12 @@ function formatNum(n) {
 }
 
 function parseInsightValue(d) {
-  const v = d?.total_value?.value ?? d?.values?.[0]?.value ?? 0;
+  let v = d?.total_value?.value;
+  if (v == null && d?.values?.length) {
+    const arr = d.values;
+    v = arr[arr.length - 1]?.value ?? arr[0]?.value;
+  }
+  if (v == null) v = 0;
   return typeof v === 'number' ? v : parseInt(v, 10) || 0;
 }
 
@@ -96,7 +101,9 @@ async function fetchAccountStats(accessToken, igUserId) {
   let dayInsights = {};
   let weekInsights = {};
   try {
-    const dayRes = await fetch(`https://graph.instagram.com/${igUserId}/insights?metric=impressions,reach,profile_views&period=day&access_token=${encodeURIComponent(clean)}`);
+    const now = Math.floor(Date.now() / 1000);
+    const dayAgo = now - 86400 * 2;
+    const dayRes = await fetch(`https://graph.instagram.com/${igUserId}/insights?metric=impressions,reach,profile_views&period=day&since=${dayAgo}&until=${now}&access_token=${encodeURIComponent(clean)}`);
     const dayData = await dayRes.json();
     if (dayData.data) dayInsights = Object.fromEntries(dayData.data.map(d => [d.name, parseInsightValue(d)]));
     else if (dayData.error) console.error('[Instagram insights day]', dayData.error?.message || dayData.error);
@@ -104,7 +111,9 @@ async function fetchAccountStats(accessToken, igUserId) {
     console.error('[Instagram insights day]', e.message);
   }
   try {
-    const weekRes = await fetch(`https://graph.instagram.com/${igUserId}/insights?metric=impressions,reach,profile_views&period=week&access_token=${encodeURIComponent(clean)}`);
+    const now = Math.floor(Date.now() / 1000);
+    const weekAgo = now - 86400 * 7;
+    const weekRes = await fetch(`https://graph.instagram.com/${igUserId}/insights?metric=impressions,reach,profile_views&period=week&since=${weekAgo}&until=${now}&access_token=${encodeURIComponent(clean)}`);
     const weekData = await weekRes.json();
     if (weekData.data) weekInsights = Object.fromEntries(weekData.data.map(d => [d.name, parseInsightValue(d)]));
     else if (weekData.error) console.error('[Instagram insights week]', weekData.error?.message || weekData.error);

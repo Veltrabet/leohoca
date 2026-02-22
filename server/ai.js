@@ -75,8 +75,8 @@ function buildMessages(sessionId, userMessage, imageData, instagramContext) {
       if (s.engagement_hint) line += `- Engagement oranı: ${s.engagement_hint}\n`;
       if (s.issues && s.issues.length) line += `- SORUNLAR: ${s.issues.join(', ')} → kullanıcıya bildir, 3-5 öneri sun\n`;
       return line;
-    }).join('\n') + '\n\nKRİTİK KURAL: Bu rakamlar GERÇEK API verisi. SADECE bunları yaz. ASLA uydurma, tahmin etme veya örnek sayı kullanma. 0 ise 0 yaz. Veri yoksa "-" yaz.';
-  } else if (userMessage && /\b(istatistik|statistik|instagram|prestigex|meta|reach|ndjekës)\b/i.test(userMessage)) {
+    }).join('\n') + '\n\nKRİTİK: Kullanıcı @prestigex veya Instagram istatistiği sordu. CEVAP: Önce SADECE yukarıdaki rakamları madde madde yaz (Arnavutça). "Ndjekës: X, Arritje ditore: Y" gibi. Genel hayat tavsiyesi VERME. Sadece sayılar. Meta verisi 48 saate kadar gecikmeli olabilir — bunu not et.';
+  } else if (userMessage && /\b(istatistik|statistik|instagram|prestigex|meta|reach|ndjekës|si po shkon)\b/i.test(userMessage)) {
     igBlock = '\n\nUYARI: Instagram verisi alınamadı (API hatası veya hesap eşleşmedi). Kullanıcıya "Të dhënat nuk u morën në këtë moment" veya "Veri şu an alınamıyor" de. ASLA sahte/örnek rakam uydurma.';
   }
   

@@ -141,7 +141,7 @@ wss.on('connection', (ws, req) => {
 
           let instagramContext = [];
           const t = (text || '').toLowerCase();
-          const hasIgIntent = /\b(istatistik|statistik|statistikat|instagram|meta|business|hesap|nasıl gidiyor|si po shkon|özet|përmbledhje|performans|takipçi|ndjekës|follower|reklam|hata|bildirim|reach|erişim|arritje|görüntülenme|pamje|kontroll|kontrolloj)\b/i.test(t);
+          const hasIgIntent = /\b(istatistik|statistik|statistikat|instagram|meta|business|hesap|nasıl gidiyor|si po shkon|özet|përmbledhje|performans|takipçi|ndjekës|follower|reklam|hata|bildirim|reach|erişim|arritje|görüntülenme|pamje|kontroll|kontrolloj|prestigex)\b/i.test(t);
           if (hasIgIntent) {
             const mentions = (t.match(/@([a-zA-Z0-9_.]+)/g) || []).map(m => m.slice(1));
             const accounts = db.prepare('SELECT username, instagram_user_id, access_token FROM instagram_accounts').all();
