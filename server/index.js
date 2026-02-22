@@ -157,7 +157,9 @@ wss.on('connection', (ws, req) => {
                   const stats = await ig.fetchAccountStats(token, row.instagram_user_id);
                   instagramContext.push({ username: un, stats });
                 }
-              } catch (_) {}
+              } catch (e) {
+                console.error('[Instagram stats]', un, e.message);
+              }
             }
           }
 

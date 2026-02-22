@@ -96,27 +96,25 @@ async function fetchAccountStats(accessToken, igUserId) {
   let dayInsights = {};
   let weekInsights = {};
   try {
-    const dayMetrics = 'impressions,reach,profile_views,accounts_engaged,total_interactions,likes,comments,saved,shares';
-    const dayRes = await fetch(`https://graph.instagram.com/${igUserId}/insights?metric=${dayMetrics}&period=day&access_token=${encodeURIComponent(clean)}`);
+    const dayRes = await fetch(`https://graph.instagram.com/${igUserId}/insights?metric=impressions,reach,profile_views&period=day&access_token=${encodeURIComponent(clean)}`);
     const dayData = await dayRes.json();
     if (dayData.data) dayInsights = Object.fromEntries(dayData.data.map(d => [d.name, parseInsightValue(d)]));
-  } catch (_) {}
+    else if (dayData.error) console.error('[Instagram insights day]', dayData.error?.message || dayData.error);
+  } catch (e) {
+    console.error('[Instagram insights day]', e.message);
+  }
   try {
-    const weekMetrics = 'impressions,reach,profile_views,accounts_engaged,total_interactions';
-    const weekRes = await fetch(`https://graph.instagram.com/${igUserId}/insights?metric=${weekMetrics}&period=week&access_token=${encodeURIComponent(clean)}`);
+    const weekRes = await fetch(`https://graph.instagram.com/${igUserId}/insights?metric=impressions,reach,profile_views&period=week&access_token=${encodeURIComponent(clean)}`);
     const weekData = await weekRes.json();
     if (weekData.data) weekInsights = Object.fromEntries(weekData.data.map(d => [d.name, parseInsightValue(d)]));
-  } catch (_) {}
+    else if (weekData.error) console.error('[Instagram insights week]', weekData.error?.message || weekData.error);
+  } catch (e) {
+    console.error('[Instagram insights week]', e.message);
+  }
 
   const impressions = dayInsights.impressions ?? 0;
   const reach = dayInsights.reach ?? 0;
   const profileViews = dayInsights.profile_views ?? 0;
-  const accountsEngaged = dayInsights.accounts_engaged ?? 0;
-  const totalInteractions = dayInsights.total_interactions ?? 0;
-  const likes = dayInsights.likes ?? 0;
-  const comments = dayInsights.comments ?? 0;
-  const saved = dayInsights.saved ?? 0;
-  const shares = dayInsights.shares ?? 0;
   const reachWeek = weekInsights.reach ?? 0;
   const impressionsWeek = weekInsights.impressions ?? 0;
 
@@ -134,12 +132,6 @@ async function fetchAccountStats(accessToken, igUserId) {
     impressions,
     reach,
     profile_views: profileViews,
-    accounts_engaged: accountsEngaged,
-    total_interactions: totalInteractions,
-    likes,
-    comments,
-    saved,
-    shares,
     reach_week: reachWeek,
     impressions_week: impressionsWeek,
     formatted: {
