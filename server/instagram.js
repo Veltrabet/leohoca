@@ -71,6 +71,19 @@ function decryptToken(encrypted) {
   return decipher.update(enc, 'hex', 'utf8') + decipher.final('utf8');
 }
 
+function formatNum(n) {
+  if (n == null || isNaN(n)) return '0';
+  const v = Number(n);
+  if (v >= 1000000) return (v / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+  if (v >= 1000) return (v / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+  return String(Math.round(v));
+}
+
+function parseInsightValue(d) {
+  const v = d?.total_value?.value ?? d?.values?.[0]?.value ?? 0;
+  return typeof v === 'number' ? v : parseInt(v, 10) || 0;
+}
+
 async function fetchAccountStats(accessToken, igUserId) {
   const clean = String(accessToken || '').trim().replace(/\s+/g, '');
   const fields = 'followers_count,media_count';
@@ -78,20 +91,34 @@ async function fetchAccountStats(accessToken, igUserId) {
   const basic = await res.json();
   if (basic.error) throw new Error(basic.error?.message || 'İstatistik alınamadı');
 
-  let insights = {};
-  try {
-    const period = 'day';
-    const metrics = 'impressions,reach,profile_views';
-    const ir = await fetch(`https://graph.instagram.com/${igUserId}/insights?metric=${metrics}&period=${period}&access_token=${encodeURIComponent(clean)}`);
-    const idata = await ir.json();
-    if (idata.data) insights = Object.fromEntries(idata.data.map(d => [d.name, d.values?.[0]?.value ?? 0]));
-  } catch (_) {}
-
   const followers = basic.followers_count ?? 0;
   const mediaCount = basic.media_count ?? 0;
-  const impressions = insights.impressions ?? 0;
-  const reach = insights.reach ?? 0;
-  const profileViews = insights.profile_views ?? 0;
+  let dayInsights = {};
+  let weekInsights = {};
+  try {
+    const dayMetrics = 'impressions,reach,profile_views,accounts_engaged,total_interactions,likes,comments,saved,shares';
+    const dayRes = await fetch(`https://graph.instagram.com/${igUserId}/insights?metric=${dayMetrics}&period=day&access_token=${encodeURIComponent(clean)}`);
+    const dayData = await dayRes.json();
+    if (dayData.data) dayInsights = Object.fromEntries(dayData.data.map(d => [d.name, parseInsightValue(d)]));
+  } catch (_) {}
+  try {
+    const weekMetrics = 'impressions,reach,profile_views,accounts_engaged,total_interactions';
+    const weekRes = await fetch(`https://graph.instagram.com/${igUserId}/insights?metric=${weekMetrics}&period=week&access_token=${encodeURIComponent(clean)}`);
+    const weekData = await weekRes.json();
+    if (weekData.data) weekInsights = Object.fromEntries(weekData.data.map(d => [d.name, parseInsightValue(d)]));
+  } catch (_) {}
+
+  const impressions = dayInsights.impressions ?? 0;
+  const reach = dayInsights.reach ?? 0;
+  const profileViews = dayInsights.profile_views ?? 0;
+  const accountsEngaged = dayInsights.accounts_engaged ?? 0;
+  const totalInteractions = dayInsights.total_interactions ?? 0;
+  const likes = dayInsights.likes ?? 0;
+  const comments = dayInsights.comments ?? 0;
+  const saved = dayInsights.saved ?? 0;
+  const shares = dayInsights.shares ?? 0;
+  const reachWeek = weekInsights.reach ?? 0;
+  const impressionsWeek = weekInsights.impressions ?? 0;
 
   const issues = [];
   if (followers > 0 && reach === 0 && mediaCount > 0) issues.push('reach_sifir');
@@ -99,15 +126,32 @@ async function fetchAccountStats(accessToken, igUserId) {
   if (reach > 0 && impressions > 0 && (reach / impressions) < 0.3) issues.push('dusuk_erisim_orani');
   if (followers > 500 && profileViews === 0) issues.push('profil_goruntulenme_yok');
 
+  const engagementPct = followers > 0 && reach > 0 ? ((reach / followers) * 100).toFixed(1) : null;
+
   return {
     followers_count: followers,
     media_count: mediaCount,
     impressions,
     reach,
     profile_views: profileViews,
-    ...insights,
+    accounts_engaged: accountsEngaged,
+    total_interactions: totalInteractions,
+    likes,
+    comments,
+    saved,
+    shares,
+    reach_week: reachWeek,
+    impressions_week: impressionsWeek,
+    formatted: {
+      followers: formatNum(followers),
+      reach: formatNum(reach),
+      impressions: formatNum(impressions),
+      reach_week: formatNum(reachWeek),
+      impressions_week: formatNum(impressionsWeek),
+      engagement: engagementPct ? engagementPct + '%' : null
+    },
     issues,
-    engagement_hint: followers > 0 && reach > 0 ? ((reach / followers) * 100).toFixed(1) + '%' : null
+    engagement_hint: engagementPct ? engagementPct + '%' : null
   };
 }
 

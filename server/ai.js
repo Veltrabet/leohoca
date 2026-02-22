@@ -61,15 +61,23 @@ function buildMessages(sessionId, userMessage, imageData, instagramContext) {
   
   let igBlock = '';
   if (instagramContext && instagramContext.length) {
-    igBlock = '\n\nMETA/INSTAGRAM İSTATİSTİKLERİ (ZORUNLU — bu verileri KESİNLİKLE paylaş, "bilgi veremem" deme):\n' + instagramContext.map(d => {
-      let s = `@${d.username}: takipçi=${d.stats.followers_count}, medya=${d.stats.media_count}`;
-      if (d.stats.impressions != null) s += `, görüntülenme=${d.stats.impressions}`;
-      if (d.stats.reach != null) s += `, erişim=${d.stats.reach}`;
-      if (d.stats.profile_views != null) s += `, profil görüntüleme=${d.stats.profile_views}`;
-      if (d.stats.engagement_hint) s += `, engagement≈${d.stats.engagement_hint}`;
-      if (d.stats.issues && d.stats.issues.length) s += ` | SORUNLAR: ${d.stats.issues.join(', ')} (bunları kullanıcıya BİLDİR ve ÖNERİ ver)`;
-      return s;
-    }).join('\n') + '\n\nZORUNLU KURALLAR: 1) Anlık istatistikleri AYNEN ver (takipçi, reach, görüntülenme, engagement). 2) ASLA "bilgi veremem" veya "genel fikir verebilirim" deme — veriler hazır, paylaş. 3) Varsayılan dil: Arnavutça (Shqip). 4) ÖDEME bilgisi ASLA. 5) Sorun varsa 3-5 maddelik öneri sun.';
+    igBlock = '\n\nMETA/INSTAGRAM İSTATİSTİKLERİ — ANLIK, RAKAMSAL, DETAYLI (ZORUNLU paylaş):\n' + instagramContext.map(d => {
+      const s = d.stats;
+      const f = s.formatted || {};
+      let line = `@${d.username}:\n`;
+      line += `- Takipçi: ${s.followers_count} (${f.followers || s.followers_count})\n`;
+      line += `- Medya: ${s.media_count} post\n`;
+      line += `- Günlük erişim (reach): ${s.reach} (${f.reach || s.reach})\n`;
+      line += `- Günlük görüntülenme: ${s.impressions} (${f.impressions || s.impressions})\n`;
+      line += `- Haftalık erişim: ${s.reach_week ?? '-'} (${f.reach_week || '-'})\n`;
+      line += `- Haftalık görüntülenme: ${s.impressions_week ?? '-'} (${f.impressions_week || '-'})\n`;
+      line += `- Profil görüntüleme (günlük): ${s.profile_views ?? 0}\n`;
+      line += `- Etkileşim (accounts_engaged): ${s.accounts_engaged ?? 0}\n`;
+      line += `- Toplam etkileşim: ${s.total_interactions ?? 0} (beğeni ${s.likes ?? 0}, yorum ${s.comments ?? 0}, kaydetme ${s.saved ?? 0}, paylaşım ${s.shares ?? 0})\n`;
+      if (s.engagement_hint) line += `- Engagement oranı: ${s.engagement_hint}\n`;
+      if (s.issues && s.issues.length) line += `- SORUNLAR: ${s.issues.join(', ')} → kullanıcıya bildir, 3-5 öneri sun\n`;
+      return line;
+    }).join('\n') + '\n\nZORUNLU: 1) Tüm rakamları ANLIK ve AYNEN ver (12k, 5.2k formatında okunabilir). 2) Arnavutça (Shqip) cevap ver. 3) ASLA "bilgi veremem" deme. 4) Her metrik için hem ham sayı hem formatlı (örn: 12000 = 12k) kullan. 5) Günlük/haftalık ayrımını belirt.';
   }
   
   const respLang = getPreferredLanguage(sessionId);
