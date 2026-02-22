@@ -49,6 +49,14 @@ app.use('/api', routes);
 
 // Serve static client files (client klasörü server'ın bir üst dizininde)
 const clientPath = path.join(__dirname, '..', 'client');
+app.use((req, res, next) => {
+  if (req.path === '/' || req.path.endsWith('.html')) {
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+  }
+  next();
+});
 app.use(express.static(clientPath));
 
 // Logo ve statik dosyalar (deploy uyumluluğu)

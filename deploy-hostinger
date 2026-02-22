@@ -1,7 +1,0 @@
-#!/bin/bash
-# zzerss.com Hostinger'a deploy için - client dosyalarını paketle
-mkdir -p hostinger-zzerss
-cp client/index.html client/config.js client/app.js client/styles.css client/manifest.json client/sw.js hostinger-zzerss/
-cp -r client/icons hostinger-zzerss/
-echo "hostinger-zzerss/ klasörü hazır. Bu klasörü Hostinger public_html'e yükleyin."
-ls -la hostinger-zzerss/
