@@ -62,6 +62,37 @@ Tarayıcıda **http://localhost:3000** açın.
 
 ---
 
+## 📋 Admin Panele Giriş (Adım Adım)
+
+### 1. Admin URL'leri
+| Ortam | URL |
+|-------|-----|
+| Yerel | http://localhost:3000/admin.html |
+| Railway | https://leohoca-production.up.railway.app/admin.html |
+
+### 2. Giriş bilgileri
+Admin paneline girmek için `.env` veya Railway Variables'ta tanımlı olan:
+- **Email:** `ADMIN_EMAIL` değeri (örn: admin@example.com)
+- **Şifre:** `ADMIN_PASSWORD` değeri
+
+### 3. İlk kurulumda
+`ADMIN_EMAIL` ve `ADMIN_PASSWORD` ilk sunucu başlatıldığında otomatik admin hesabı oluşturur. Bu email ve şifre ile giriş yapın.
+
+### 4. Giriş adımları
+1. Admin URL'yi tarayıcıda açın
+2. Email kutusuna `ADMIN_EMAIL` yazın
+3. Şifre kutusuna `ADMIN_PASSWORD` yazın
+4. **Giriş** butonuna tıklayın
+
+### 5. Admin panelde neler var?
+- Geri bildirim istatistikleri (👍👎)
+- Özellik açma/kapama
+- Logo yükleme
+- **Instagram hesapları** — Hesap Bağla ile Instagram ekleyin
+- Kullanıcı listesi
+
+---
+
 ## 2. Railway'de Kurulum (Canlı Yayın)
 
 ### Adım 1: GitHub'a push
