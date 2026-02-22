@@ -1,6 +1,6 @@
 # LeoHoca - Railway Kurulum Rehberi
 
-LeoHoca artık **https://leohoca-production.up.railway.app** adresinde çalışıyor.
+LeoHoca artık **https://leohoca.up.railway.app** adresinde çalışıyor.
 
 ## Tek Yapmanız Gereken: GROQ_API_KEY
 
@@ -41,7 +41,7 @@ Kayıt, giriş ve admin paneli için:
 
 - [x] GitHub'a push edildi
 - [x] Railway'de deploy edildi
-- [x] Domain: leohoca-production.up.railway.app
+- [x] Domain: leohoca.up.railway.app
 - [ ] **GROQ_API_KEY** eklendi (Variables)
 - [ ] **ADMIN_EMAIL**, **ADMIN_PASSWORD**, **JWT_SECRET** (admin paneli)
 - [ ] **LEOHOCA_PASSWORD** (opsiyonel - şifre koruması)
@@ -50,7 +50,7 @@ Kayıt, giriş ve admin paneli için:
 
 ## Kullanım
 
-**https://leohoca-production.up.railway.app** adresine gidin.
+**https://leohoca.up.railway.app** adresine gidin.
 
 - Mikrofon butonuna basıp konuşun
 - TR / SQ dil seçin

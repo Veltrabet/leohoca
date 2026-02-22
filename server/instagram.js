@@ -32,7 +32,8 @@ async function exchangeCodeForToken(code) {
     })
   });
   const data = await res.json();
-  if (data.error) throw new Error(data.error_message || data.error || 'Token alınamadı');
+  if (data.error) throw new Error(data.error_message || data.error?.message || data.error || 'Token alınamadı');
+  if (!data.access_token) throw new Error('access_token nuk u kthye nga Meta');
   return data;
 }
 
@@ -82,10 +83,27 @@ async function fetchAccountStats(accessToken, igUserId) {
     if (idata.data) insights = Object.fromEntries(idata.data.map(d => [d.name, d.values?.[0]?.value ?? 0]));
   } catch (_) {}
 
+  const followers = basic.followers_count ?? 0;
+  const mediaCount = basic.media_count ?? 0;
+  const impressions = insights.impressions ?? 0;
+  const reach = insights.reach ?? 0;
+  const profileViews = insights.profile_views ?? 0;
+
+  const issues = [];
+  if (followers > 0 && reach === 0 && mediaCount > 0) issues.push('reach_sifir');
+  if (followers > 100 && impressions < 10 && mediaCount > 0) issues.push('dusuk_goruntulenme');
+  if (reach > 0 && impressions > 0 && (reach / impressions) < 0.3) issues.push('dusuk_erisim_orani');
+  if (followers > 500 && profileViews === 0) issues.push('profil_goruntulenme_yok');
+
   return {
-    followers_count: basic.followers_count ?? 0,
-    media_count: basic.media_count ?? 0,
-    ...insights
+    followers_count: followers,
+    media_count: mediaCount,
+    impressions,
+    reach,
+    profile_views: profileViews,
+    ...insights,
+    issues,
+    engagement_hint: followers > 0 && reach > 0 ? ((reach / followers) * 100).toFixed(1) + '%' : null
   };
 }
 

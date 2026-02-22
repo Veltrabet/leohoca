@@ -104,6 +104,29 @@ router.get('/admin/users', auth.requireAuth, auth.requireAdmin, (req, res) => {
   res.json({ ok: true, users });
 });
 
+router.get('/admin/allowed-emails', auth.requireAuth, auth.requireAdmin, (req, res) => {
+  const rows = db.prepare('SELECT id, email, created_at FROM allowed_emails ORDER BY email').all();
+  res.json({ ok: true, emails: rows });
+});
+
+router.post('/admin/allowed-emails', auth.requireAuth, auth.requireAdmin, (req, res) => {
+  const { email } = req.body || {};
+  const em = (email || '').trim().toLowerCase();
+  if (!em || !em.includes('@')) return res.status(400).json({ ok: false, error: 'Geçerli email girin' });
+  try {
+    db.prepare('INSERT INTO allowed_emails (email) VALUES (?)').run(em);
+    res.json({ ok: true });
+  } catch (e) {
+    if (e.message.includes('UNIQUE')) return res.status(400).json({ ok: false, error: 'Bu email zaten listede' });
+    throw e;
+  }
+});
+
+router.delete('/admin/allowed-emails/:id', auth.requireAuth, auth.requireAdmin, (req, res) => {
+  db.prepare('DELETE FROM allowed_emails WHERE id = ?').run(req.params.id);
+  res.json({ ok: true });
+});
+
 router.get('/admin/feedback', auth.requireAuth, auth.requireAdmin, (req, res) => {
   const limit = Math.min(parseInt(req.query.limit) || 100, 500);
   const feedback = db.prepare(`
@@ -167,7 +190,9 @@ router.get('/instagram/connect', auth.requireAuth, auth.requireAdmin, (req, res)
 
 router.get('/instagram/callback', async (req, res) => {
   const { code, state, error } = req.query;
-  const adminUrl = req.protocol + '://' + req.get('host') + '/admin.html';
+  const proto = req.get('x-forwarded-proto') || req.protocol;
+  const host = req.get('x-forwarded-host') || req.get('host');
+  const adminUrl = `${proto}://${host}/admin.html`;
   if (error) return res.redirect(adminUrl + '?ig_error=' + encodeURIComponent(error));
   if (!code) return res.redirect(adminUrl + '?ig_error=code_yok');
   try {

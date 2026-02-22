@@ -5,18 +5,32 @@
 const db = require('./db');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const settings = require('./settings');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'leogpt-secret-change-in-production';
 const JWT_EXPIRY = '7d';
+
+function isEmailAllowed(email) {
+  const em = (email || '').toLowerCase().trim();
+  if (!em) return false;
+  const row = db.prepare('SELECT id FROM allowed_emails WHERE LOWER(email) = ?').get(em);
+  return !!row;
+}
 
 function register(email, password, name) {
   if (!email || !password) return { ok: false, error: 'Email ve şifre gerekli' };
   if (password.length < 6) return { ok: false, error: 'Şifre en az 6 karakter olmalı' };
 
+  const em = email.toLowerCase().trim();
+  const flags = settings.getFeatureFlags();
+  if (flags.inviteOnly && !isEmailAllowed(em)) {
+    return { ok: false, error: 'Bu email izin listesinde değil. Admin\'den davet isteyin.' };
+  }
+
   const hash = bcrypt.hashSync(password, 10);
   try {
     db.prepare('INSERT INTO users (email, password_hash, name) VALUES (?, ?, ?)')
-      .run(email.toLowerCase().trim(), hash, (name || '').trim());
+      .run(em, hash, (name || '').trim());
     const user = db.prepare('SELECT id, email, name, is_admin FROM users WHERE email = ?')
       .get(email.toLowerCase().trim());
     const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: JWT_EXPIRY });

@@ -121,7 +121,7 @@ Kullanıcı Instagram istatistiği istediğinde:
 ```
 META_APP_ID=xxx
 META_APP_SECRET=xxx
-INSTAGRAM_REDIRECT_URI=https://leohoca-production.up.railway.app/api/instagram/callback
+INSTAGRAM_REDIRECT_URI=https://leohoca.up.railway.app/api/instagram/callback
 ```
 
 ---
@@ -148,9 +148,9 @@ INSTAGRAM_REDIRECT_URI=https://leohoca-production.up.railway.app/api/instagram/c
 1. Sol menü: **Instagram** → **"Basic Display"** veya **"Settings"**
 2. **"Valid OAuth Redirect URIs"** bölümüne ekleyin:
    ```
-   https://leohoca-production.up.railway.app/api/instagram/callback
+   https://leohoca.up.railway.app/api/instagram/callback
    ```
-   (Kendi domain'inizi yazın — Railway URL'niz veya localhost için `http://localhost:3000/api/instagram/callback`)
+   (Kendi domain'inizi yazın — Railway URL'niz veya localhost için `http://localhost:3100/api/instagram/callback`)
 3. **"Save Changes"**
 
 ### Adım 5: App ID ve Secret alın
@@ -172,7 +172,7 @@ INSTAGRAM_REDIRECT_URI=https://leohoca-production.up.railway.app/api/instagram/c
 ```env
 META_APP_ID=1234567890123456
 META_APP_SECRET=abcdef1234567890abcdef1234567890
-INSTAGRAM_REDIRECT_URI=https://leohoca-production.up.railway.app/api/instagram/callback
+INSTAGRAM_REDIRECT_URI=https://leohoca.up.railway.app/api/instagram/callback
 ```
 
 **Kısa özet:** Meta for Developers → Create App → Instagram ekle → Redirect URI ekle → App ID + Secret al → .env'e yaz

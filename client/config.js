@@ -1,5 +1,6 @@
 /**
- * LeoHoca - zzerss.com için
- * Hostinger'a yükleyin, ilk açılışta Railway URL'sini girin.
+ * LeoHoca - Backend URL
+ * Boş bırakırsanız: aynı sunucudan açılırsa otomatik, yoksa localhost:3100
+ * Railway/Hostinger: 'https://leohoca.up.railway.app' gibi tam URL yazın
  */
 var LEOHOCA_BACKEND = '';

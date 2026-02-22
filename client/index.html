@@ -26,6 +26,30 @@
     </div>
   </div>
 
+  <!-- Login/Register overlay (require_login=1) -->
+  <div id="loginOverlay" class="overlay" style="display:none">
+    <div class="overlay-box glass" style="max-width:400px">
+      <h2>LeoGPT</h2>
+      <p id="loginOverlayMsg">Hyni ose regjistrohuni</p>
+      <div id="loginForm">
+        <input type="email" id="loginEmail" placeholder="Email" />
+        <input type="password" id="loginPassword" placeholder="Fjalëkalimi" />
+        <button id="loginSubmit" class="btn-primary">Hyr</button>
+        <p class="error-msg" id="loginError"></p>
+      </div>
+      <div id="registerForm" style="display:none">
+        <input type="text" id="regName" placeholder="Emri (opsional)" />
+        <input type="email" id="regEmail" placeholder="Email" />
+        <input type="password" id="regPassword" placeholder="Fjalëkalimi (min 6 karaktere)" />
+        <button id="regSubmit" class="btn-primary">Regjistrohu</button>
+        <p class="error-msg" id="regError"></p>
+      </div>
+      <p style="margin-top:1rem; font-size:0.9rem">
+        <a href="#" id="toggleReg" style="color:var(--accent)">Regjistrohu</a> | <a href="#" id="toggleLogin" style="color:var(--accent)">Hyr</a>
+      </p>
+    </div>
+  </div>
+
   <!-- Setup overlay -->
   <div id="setupOverlay" class="overlay" style="display:none">
     <div class="overlay-box glass">
@@ -139,6 +163,8 @@
           </select>
         </div>
         <div class="header-right">
+          <span id="userBadge" style="display:none; font-size:0.85rem; margin-right:0.5rem; color:var(--text-secondary)"></span>
+          <button class="icon-btn" id="logoutBtn" style="display:none" title="Çıkış">Çıkış</button>
           <button class="icon-btn theme-toggle" id="themeToggle" aria-label="Tema">
             <span class="theme-icon">🌙</span>
           </button>

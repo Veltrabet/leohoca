@@ -37,7 +37,7 @@ const ig = require('./instagram');
 
 const app = express();
 const server = http.createServer(app);
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3100;
 
 // Initialize AI
 ai.initAI();
@@ -141,7 +141,7 @@ wss.on('connection', (ws, req) => {
 
           let instagramContext = [];
           const t = (text || '').toLowerCase();
-          const hasIgIntent = /\b(istatistik|istatistikler|instagram|hesap|nasıl gidiyor|özet|performans|takipçi|follower)\b/i.test(t);
+          const hasIgIntent = /\b(istatistik|istatistikler|instagram|hesap|nasıl gidiyor|özet|performans|takipçi|follower|reklam|hata|bildirim|reach|erişim|görüntülenme)\b/i.test(t);
           if (hasIgIntent) {
             const mentions = (t.match(/@([a-zA-Z0-9_.]+)/g) || []).map(m => m.slice(1));
             const accounts = db.prepare('SELECT username, instagram_user_id, access_token FROM instagram_accounts').all();

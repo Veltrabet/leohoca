@@ -1,75 +1,59 @@
-# LeoHoca - Real-time Voice AI Assistant
+# LeoGPT — AI Asistent me Zë dhe Bisedë
 
-A full-stack real-time voice AI assistant that supports **Turkish (tr-TR)** and **Albanian (sq-AL)**. LeoHoca helps with software development, project planning, and business ideas—like a close, intelligent friend.
+Asistent AI në kohë reale që mbështet **Shqip (sq-AL)** dhe **Türkçe (tr-TR)**. LeoGPT ndihmon me zhvillim softueri, planifikim projektesh, ide biznesi dhe **statistika Instagram/Meta**.
 
-**Herkes erişebilir** – Railway/Render ile ücretsiz buluta deploy edin.
+**Deploy falas** — Railway/Render me një klik.
 
-## Features
+## Veçoritë
 
-- **Speech-to-Text**: Microphone input with Web Speech API
-- **AI Chat**: Streaming responses via OpenAI
-- **Text-to-Speech**: Natural voice output
-- **Real-time**: WebSocket-based instant communication
-- **Interruption**: Speak anytime—AI stops when you talk
-- **Bilingual**: Auto-detects Turkish vs Albanian
-- **Session Memory**: Remembers conversation context
-- **PWA**: Install on phone and use like a native app
+- **Zë → Tekst**: Mikrofon me Web Speech API
+- **Bisedë AI**: Përgjigje në rrjedhë (Groq/Gemini/Ollama)
+- **Tekst → Zë**: Zë natyror
+- **WebSocket**: Komunikim në kohë reale
+- **Ndërprerje**: Foli kurdo — AI ndalon
+- **Shqip + Türkçe**: Gjuha parazgjedhur Shqip; Türkçe vetëm kur përdoruesi kërkon
+- **Instagram/Meta**: Statistika nga Meta Business, njoftim gabimesh reklamash
+- **PWA**: Instalo në telefon si aplikacion
 
-## Tech Stack
+## Stack
 
-- **Backend**: Node.js, Express, WebSocket (ws)
-- **Frontend**: HTML, Vanilla JavaScript, CSS
-- **AI**: Ollama (ücretsiz, sınırsız) veya OpenAI (opsiyonel)
-- **Voice**: Browser Web Speech API (STT + TTS)
+- **Backend**: Node.js, Express, WebSocket
+- **Frontend**: HTML, JavaScript, Bootstrap 5 (admin)
+- **AI**: Groq (falas) | Gemini (falas) | Ollama (lokale)
 
-## Project Structure
+## Projektet
 
 ```
 ├── server/
-│   ├── config/
-│   │   ├── persona.json    # AI personality & system prompt
-│   │   └── voice.json      # Voice/language config
-│   ├── index.js            # Express + WebSocket server
-│   ├── ai.js               # OpenAI integration
-│   ├── memory.js           # Session-based memory
-│   └── package.json
+│   ├── config/           # persona, voice
+│   ├── index.js          # Express + WebSocket
+│   ├── ai.js             # Groq/Gemini/Ollama
+│   ├── instagram.js      # Meta/Instagram API
+│   ├── .env.example      # Shembull variablash
+│   └── .env              # Variabla (mos e ngarkoni në GitHub!)
 ├── client/
 │   ├── index.html
-│   ├── app.js              # STT, TTS, WebSocket client
-│   ├── styles.css
-│   ├── manifest.json       # PWA manifest
-│   ├── sw.js               # Service worker
-│   └── icons/
-├── scripts/
-│   └── generate-icons.js   # PWA icon generator
-├── README.md
-└── .env.example
+│   ├── admin.html        # Paneli admin (Bootstrap 5)
+│   └── app.js
+├── railway.json
+├── .gitignore            # .env, server/.env
+└── README.md
 ```
 
-## Herkese Açık Deploy (Ücretsiz)
+## Deploy në Railway
 
-### Railway ile (Önerilen)
-
-1. **https://railway.app** – GitHub ile giriş
-2. **New Project** → **Deploy from GitHub** → Repo seçin
-3. **Variables** → `GROQ_API_KEY` ekleyin (https://console.groq.com – ücretsiz key)
-4. Deploy tamamlanınca **Settings** → **Generate Domain** ile URL alın
-5. Herkes bu URL ile erişebilir
-
-### Render ile
-
-1. **https://render.com** – GitHub ile giriş
-2. **New** → **Web Service** → Repo seçin
-3. Build: `cd server && npm install`
-4. Start: `cd server && npm start`
-5. **Environment** → `GROQ_API_KEY` ekleyin
-6. Deploy
-
-### Groq API Key (Ücretsiz)
-
-- https://console.groq.com
-- Sign up → API Keys → Create
-- Kredi kartı gerekmez
+1. **https://railway.app** → Hyr me GitHub
+2. **New Project** → **Deploy from GitHub** → Zgjidh repon
+3. **Variables** (obligator):
+   - `GROQ_API_KEY` — https://console.groq.com (falas)
+   - `ADMIN_EMAIL` — admin@example.com
+   - `ADMIN_PASSWORD` — fjalëkalim i fortë
+4. **Variables** (për Instagram):
+   - `META_APP_ID` — Meta for Developers → Settings → Basic
+   - `META_APP_SECRET` — i njëjti vend
+   - `INSTAGRAM_REDIRECT_URI` — https://DOMAIN-RAILWAY/api/instagram/callback
+5. **Settings** → **Generate Domain** → Merr URL
+6. Në Meta, shto këtë URL në Valid OAuth Redirect URIs
 
 ---
 
@@ -133,7 +117,7 @@ npm start
 
 ### 3. Tarayıcıda aç
 
-**http://localhost:3000** (veya 3001)
+**http://localhost:3100**
 
 **Chrome** kullanın.
 

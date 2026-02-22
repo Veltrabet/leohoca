@@ -10,7 +10,7 @@ Kayıt, giriş, geri bildirim ve admin paneli dahil tam kurulum.
 |---|--------|---------|
 | 1 | **GROQ_API_KEY** ekle | https://console.groq.com → API Keys |
 | 2 | `server/.env` oluştur → `GROQ_API_KEY=gsk_xxx` yaz | Yerel |
-| 3 | `npm start` → http://localhost:3000 | Terminal |
+| 3 | `npm start` → http://localhost:3100 | Terminal |
 
 **Railway için:** Variables'a `GROQ_API_KEY` ekle → push → deploy otomatik.
 
@@ -52,11 +52,11 @@ JWT_SECRET=rastgele_uzun_anahtar_buraya
 npm start
 ```
 
-Tarayıcıda **http://localhost:3000** açın.
+Tarayıcıda **http://localhost:3100** açın.
 
 ### Adım 4: Admin paneline giriş
 
-1. **http://localhost:3000/admin.html** adresine gidin
+1. **http://localhost:3100/admin.html** adresine gidin
 2. `ADMIN_EMAIL` ve `ADMIN_PASSWORD` ile giriş yapın
 3. Admin paneli açılır
 
@@ -67,8 +67,8 @@ Tarayıcıda **http://localhost:3000** açın.
 ### 1. Admin URL'leri
 | Ortam | URL |
 |-------|-----|
-| Yerel | http://localhost:3000/admin.html |
-| Railway | https://leohoca-production.up.railway.app/admin.html |
+| Yerel | http://localhost:3100/admin.html |
+| Railway | https://leohoca.up.railway.app/admin.html |
 
 ### 2. Giriş bilgileri
 Admin paneline girmek için `.env` veya Railway Variables'ta tanımlı olan:

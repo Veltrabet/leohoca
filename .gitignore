@@ -5,3 +5,5 @@ server/data/
 client/uploads/
 *.log
 .DS_Store
+.env.local
+.env.*.local

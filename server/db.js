@@ -59,20 +59,31 @@ db.exec(`
     last_sync_at DATETIME
   );
   CREATE INDEX IF NOT EXISTS idx_ig_username ON instagram_accounts(username);
+
+  CREATE TABLE IF NOT EXISTS allowed_emails (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT UNIQUE NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE INDEX IF NOT EXISTS idx_allowed_email ON allowed_emails(email);
 `);
 
 function initAdmin() {
-  const adminEmail = process.env.ADMIN_EMAIL;
+  const adminEmail = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
   const adminPassword = process.env.ADMIN_PASSWORD;
   if (!adminEmail || !adminPassword) return;
 
   const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(adminEmail);
-  if (existing) return;
+  if (existing) {
+    db.prepare('INSERT OR IGNORE INTO allowed_emails (email) VALUES (?)').run(adminEmail);
+    return;
+  }
 
   const bcrypt = require('bcrypt');
   const hash = bcrypt.hashSync(adminPassword, 10);
   db.prepare('INSERT INTO users (email, password_hash, name, is_admin) VALUES (?, ?, ?, 1)')
     .run(adminEmail, hash, 'Admin');
+  db.prepare('INSERT OR IGNORE INTO allowed_emails (email) VALUES (?)').run(adminEmail);
   console.log('Admin hesabı oluşturuldu:', adminEmail);
 }
 
@@ -84,6 +95,7 @@ function initDefaultSettings() {
     features_tech: '1',
     features_business: '1',
     require_login: '0',
+    invite_only: '1',
     app_logo_url: '',
     app_banner_url: '',
     app_extra_html: ''

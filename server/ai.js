@@ -4,7 +4,7 @@
  * Yerel: Ollama (ücretsiz, sınırsız)
  */
 
-const { getConversationHistory, addMessage, setDetectedLanguage, getDetectedLanguage, getPreferredLanguage } = require('./memory');
+const { getConversationHistory, addMessage, setDetectedLanguage, getDetectedLanguage, getPreferredLanguage, setPreferredLanguage } = require('./memory');
 const persona = require('./config/persona.json');
 
 let aiProvider = null; // 'groq' | 'gemini' | 'openai' | 'ollama'
@@ -61,13 +61,21 @@ function buildMessages(sessionId, userMessage, imageData, instagramContext) {
   
   let igBlock = '';
   if (instagramContext && instagramContext.length) {
-    igBlock = '\n\nINSTAGRAM VERİLERİ (kullanıcı istatistik istedi):\n' + instagramContext.map(d => 
-      `@${d.username}: takipçi=${d.stats.followers_count}, medya=${d.stats.media_count}${d.stats.impressions != null ? ', görüntülenme=' + d.stats.impressions : ''}${d.stats.reach != null ? ', erişim=' + d.stats.reach : ''}${d.stats.profile_views != null ? ', profil görüntüleme=' + d.stats.profile_views : ''}`
-    ).join('\n') + '\nBu verilere göre analiz yap, düşük metrikleri sorun olarak işaretle, her biri için 3-5 maddelik çözüm yol haritası ver. ASLA token/şifre/API bilgisi yazma.';
+    igBlock = '\n\nMETA/INSTAGRAM İSTATİSTİKLERİ (soran kişiye cevap ver):\n' + instagramContext.map(d => {
+      let s = `@${d.username}: takipçi=${d.stats.followers_count}, medya=${d.stats.media_count}`;
+      if (d.stats.impressions != null) s += `, görüntülenme=${d.stats.impressions}`;
+      if (d.stats.reach != null) s += `, erişim=${d.stats.reach}`;
+      if (d.stats.profile_views != null) s += `, profil görüntüleme=${d.stats.profile_views}`;
+      if (d.stats.engagement_hint) s += `, engagement≈${d.stats.engagement_hint}`;
+      if (d.stats.issues && d.stats.issues.length) s += ` | SORUNLAR: ${d.stats.issues.join(', ')} (bunları kullanıcıya BİLDİR ve ÖNERİ ver)`;
+      return s;
+    }).join('\n') + '\n\nKURALLAR: Sadece istatistik ver. ÖDEME bilgisi ASLA. Sorun varsa kullanıcıyı bildir, 3-5 maddelik öneri sun. ASLA token/şifre yazma.';
   }
   
+  const respLang = getPreferredLanguage(sessionId);
+  const langRule = respLang === 'tr-TR' ? 'CEVAP DİLİ: SADECE Türkçe.' : 'CEVAP DİLİ: SADECE Arnavutça (Shqip).';
   const systemPrompt = persona.systemPrompt + 
-    `\n\nÖNEMLİ KURALLAR:
+    `\n\n${langRule}\n\nÖNEMLİ KURALLAR:
 1. DİL: Kullanıcı hangi dilde yazarsa O DİLDE cevap ver. Türkçe→Türkçe, Arnavutça→Arnavutça, İngilizce→İngilizce.
 2. CEVAP: Soruya doğrudan cevap ver. Konudan sapma. Kısa ve net ol. Gereksiz uzatma.
 3. ARNAVUTÇA: Gjuha letrare, ë ç dh th zh doğru. Gramer kusursuz.
@@ -246,8 +254,14 @@ async function streamWithOpenAI(messages, onChunk, onComplete) {
 }
 
 async function streamChat(sessionId, userMessage, imageData, onChunk, onComplete, instagramContext) {
-  const detectedLang = detectLanguage(userMessage);
-  setDetectedLanguage(sessionId, detectedLang);
+  const t = (userMessage || '').toLowerCase();
+  if (/\b(türkçe|turkce|türkce)\s*(konuş|cevap|yaz|söyle|anlat)/i.test(t) || /\b(türkçe\s*konuşur\s*musun|turkce\s*konus)/i.test(t)) {
+    setPreferredLanguage(sessionId, 'tr-TR');
+  } else if (/\b(shqip|arnavutça|arnavutca)\s*(fol|përgjigju|shkruaj)/i.test(t) || /\b(fol\s*shqip|përgjigju\s*në\s*shqip)/i.test(t)) {
+    setPreferredLanguage(sessionId, 'sq-AL');
+  }
+  const preferred = getPreferredLanguage(sessionId);
+  setDetectedLanguage(sessionId, preferred);
   addMessage(sessionId, 'user', userMessage + (imageData ? ' [imazh]' : ''));
 
   const messages = buildMessages(sessionId, userMessage, imageData, instagramContext);

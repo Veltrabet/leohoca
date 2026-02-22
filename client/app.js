@@ -171,10 +171,9 @@
   };
 
   function getUILang() {
-    const nav = (navigator.language || navigator.userLanguage || 'en').toLowerCase();
-    if (nav.startsWith('tr')) return 'tr-TR';
-    if (nav.startsWith('sq')) return 'sq-AL';
-    return 'en';
+    const stored = localStorage.getItem('leogpt_ui_lang');
+    if (stored === 'tr-TR' || stored === 'sq-AL') return stored;
+    return 'sq-AL';
   }
 
   const uiLang = getUILang();
@@ -805,6 +804,9 @@
   const passwordInput = document.getElementById('passwordInput');
   const passwordSubmit = document.getElementById('passwordSubmit');
   const passwordError = document.getElementById('passwordError');
+  const loginOverlay = document.getElementById('loginOverlay');
+  const loginForm = document.getElementById('loginForm');
+  const registerForm = document.getElementById('registerForm');
   const setupOverlay = document.getElementById('setupOverlay');
   const backendInput = document.getElementById('backendUrl');
   const saveBtn = document.getElementById('saveBackend');
@@ -828,6 +830,7 @@
   function showMainApp() {
     authOverlay?.style && (authOverlay.style.display = 'none');
     passwordOverlay.style.display = 'none';
+    loginOverlay.style.display = 'none';
     setupOverlay.style.display = 'none';
     mainApp.style.display = 'flex';
     updateUI();
@@ -841,6 +844,12 @@
     localStorage.removeItem('leogpt_token');
     localStorage.removeItem('leogpt_user');
     updateUserUI();
+    fetch(BACKEND + '/api/config/public').then(r => r.json()).catch(() => ({})).then(config => {
+      if ((config.features || {}).requireLogin) {
+        mainApp.style.display = 'none';
+        if (loginOverlay) { loginOverlay.style.display = 'flex'; loginForm.style.display = 'block'; registerForm.style.display = 'none'; }
+      }
+    });
   });
 
   function initApp() {
@@ -870,19 +879,96 @@
     fetch(BACKEND + '/api/auth/required').then(r => r.json()).then(d => {
       if (d.required) {
         authOverlay?.style && (authOverlay.style.display = 'none');
+        loginOverlay.style.display = 'none';
         passwordOverlay.style.display = 'flex';
         passwordSubmit?.addEventListener('click', () => {
           const pwd = passwordInput?.value || '';
           passwordError.textContent = '';
           fetch(BACKEND + '/api/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: pwd }) })
             .then(r => r.json()).then(data => {
-              if (data.ok) { sessionStorage.setItem('leohoca_auth', '1'); showMainApp(); }
-              else passwordError.textContent = t('wrongPassword');
+              if (data.ok) {
+                sessionStorage.setItem('leohoca_auth', '1');
+                fetch(BACKEND + '/api/config/public').then(r => r.json()).catch(() => ({})).then(config => {
+                  const token = localStorage.getItem('leogpt_token');
+                  if ((config.features || {}).requireLogin && !token) {
+                    passwordOverlay.style.display = 'none';
+                    loginOverlay.style.display = 'flex';
+                    loginForm.style.display = 'block';
+                    registerForm.style.display = 'none';
+                    document.getElementById('loginError').textContent = '';
+                    document.getElementById('regError').textContent = '';
+                    document.getElementById('loginSubmit')?.addEventListener('click', doLogin);
+                    document.getElementById('regSubmit')?.addEventListener('click', doRegister);
+                    document.getElementById('loginPassword')?.addEventListener('keydown', (e) => { if (e.key === 'Enter') doLogin(); });
+                    document.getElementById('regPassword')?.addEventListener('keydown', (e) => { if (e.key === 'Enter') doRegister(); });
+                    document.getElementById('toggleReg')?.addEventListener('click', (e) => { e.preventDefault(); loginForm.style.display = 'none'; registerForm.style.display = 'block'; });
+                    document.getElementById('toggleLogin')?.addEventListener('click', (e) => { e.preventDefault(); loginForm.style.display = 'block'; registerForm.style.display = 'none'; });
+                  } else showMainApp();
+                });
+              } else passwordError.textContent = t('wrongPassword');
             }).catch(() => { passwordError.textContent = t('connectionError'); });
         });
         passwordInput?.addEventListener('keydown', (e) => { if (e.key === 'Enter') passwordSubmit?.click(); });
-      } else showMainApp();
+        return;
+      }
+      fetch(BACKEND + '/api/config/public').then(r => r.json()).catch(() => ({})).then(config => {
+        const features = config.features || {};
+        const token = localStorage.getItem('leogpt_token');
+        if (features.requireLogin && !token) {
+          authOverlay?.style && (authOverlay.style.display = 'none');
+          passwordOverlay.style.display = 'none';
+          loginOverlay.style.display = 'flex';
+          loginForm.style.display = 'block';
+          registerForm.style.display = 'none';
+          document.getElementById('loginError').textContent = '';
+          document.getElementById('regError').textContent = '';
+          document.getElementById('loginSubmit')?.addEventListener('click', doLogin);
+          document.getElementById('regSubmit')?.addEventListener('click', doRegister);
+          document.getElementById('loginPassword')?.addEventListener('keydown', (e) => { if (e.key === 'Enter') doLogin(); });
+          document.getElementById('regPassword')?.addEventListener('keydown', (e) => { if (e.key === 'Enter') doRegister(); });
+          document.getElementById('toggleReg')?.addEventListener('click', (e) => { e.preventDefault(); loginForm.style.display = 'none'; registerForm.style.display = 'block'; });
+          document.getElementById('toggleLogin')?.addEventListener('click', (e) => { e.preventDefault(); loginForm.style.display = 'block'; registerForm.style.display = 'none'; });
+        } else showMainApp();
+      }).catch(() => showMainApp());
     }).catch(() => showMainApp());
+  }
+
+  async function doLogin() {
+    const email = document.getElementById('loginEmail')?.value?.trim();
+    const password = document.getElementById('loginPassword')?.value;
+    const err = document.getElementById('loginError');
+    err.textContent = '';
+    if (!email || !password) { err.textContent = 'Vendosni email dhe fjalëkalim'; return; }
+    try {
+      const r = await fetch(BACKEND + '/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) });
+      const d = await r.json();
+      if (d.ok && d.token) {
+        localStorage.setItem('leogpt_token', d.token);
+        localStorage.setItem('leogpt_user', JSON.stringify(d.user || {}));
+        updateUserUI();
+        showMainApp();
+      } else err.textContent = d.error || 'Hyrja dështoi';
+    } catch (e) { err.textContent = 'Gabim lidhjeje'; }
+  }
+
+  async function doRegister() {
+    const email = document.getElementById('regEmail')?.value?.trim();
+    const password = document.getElementById('regPassword')?.value;
+    const name = document.getElementById('regName')?.value?.trim();
+    const err = document.getElementById('regError');
+    err.textContent = '';
+    if (!email || !password) { err.textContent = 'Vendosni email dhe fjalëkalim'; return; }
+    if (password.length < 6) { err.textContent = 'Fjalëkalimi duhet të ketë të paktën 6 karaktere'; return; }
+    try {
+      const r = await fetch(BACKEND + '/api/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password, name }) });
+      const d = await r.json();
+      if (d.ok && d.token) {
+        localStorage.setItem('leogpt_token', d.token);
+        localStorage.setItem('leogpt_user', JSON.stringify(d.user || {}));
+        updateUserUI();
+        showMainApp();
+      } else err.textContent = d.error || 'Regjistrimi dështoi';
+    } catch (e) { err.textContent = 'Gabim lidhjeje'; }
   }
 
   initApp();

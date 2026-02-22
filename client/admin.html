@@ -1,113 +1,171 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="sq">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LeoGPT - Admin Panel</title>
+  <title>LeoGPT — Paneli i Adminit</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=2.0">
   <style>
-    .admin { max-width: 900px; margin: 0 auto; padding: 1.5rem; }
-    .admin h1 { margin-bottom: 1.5rem; }
-    .admin-section { background: var(--bg-card); border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; border: 1px solid var(--border); }
-    .admin-section h2 { font-size: 1rem; margin-bottom: 1rem; color: var(--text-secondary); }
-    .feature-toggle { display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--border); }
-    .feature-toggle:last-child { border-bottom: none; }
-    .toggle-switch { width: 44px; height: 24px; background: var(--bg-elevated); border-radius: 12px; position: relative; cursor: pointer; transition: background 0.2s; }
-    .toggle-switch.on { background: var(--success); }
-    .toggle-switch::after { content: ''; position: absolute; width: 18px; height: 18px; background: white; border-radius: 50%; top: 3px; left: 3px; transition: left 0.2s; }
-    .toggle-switch.on::after { left: 23px; }
-    .content-item { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; }
-    .content-item input { flex: 1; padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-elevated); color: var(--text-primary); }
-    .content-item button { padding: 0.5rem 0.75rem; border-radius: 6px; border: none; background: #ef4444; color: white; cursor: pointer; font-size: 0.85rem; }
-    .btn { padding: 0.5rem 1rem; border-radius: 6px; border: none; background: var(--accent); color: white; cursor: pointer; font-weight: 600; }
-    .btn:hover { background: var(--accent-hover); }
-    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
-    .stat-box { background: var(--bg-elevated); padding: 1rem; border-radius: 8px; text-align: center; }
-    .stat-box .num { font-size: 1.5rem; font-weight: 700; color: var(--accent); }
-    .stat-box .label { font-size: 0.75rem; color: var(--text-muted); }
-    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-    th, td { padding: 0.5rem; text-align: left; border-bottom: 1px solid var(--border); }
-    .login-box { max-width: 400px; margin: 4rem auto; padding: 2rem; background: var(--bg-card); border-radius: 12px; }
-    .login-box input { width: 100%; padding: 0.75rem; margin-bottom: 1rem; border-radius: 8px; border: 1px solid var(--border); }
-    .login-box button { width: 100%; padding: 0.9rem; background: var(--accent); border: none; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; }
-    .error { color: #ef4444; margin-bottom: 1rem; }
+    :root { --bs-body-font-family: 'Plus Jakarta Sans', sans-serif; }
+    .admin-nav { background: linear-gradient(135deg, #1e3a5f 0%, #0d1b2a 100%); }
+    .card { border: none; box-shadow: 0 2px 12px rgba(0,0,0,0.08); border-radius: 12px; }
+    .card-header { font-weight: 600; border-radius: 12px 12px 0 0; }
+    .ig-highlight { border-left: 4px solid #E1306C; }
+    .form-check-input:checked { background-color: #1e3a5f; border-color: #1e3a5f; }
+    .btn-primary { background: #1e3a5f; border-color: #1e3a5f; }
+    .btn-primary:hover { background: #2d4a7c; border-color: #2d4a7c; }
+    .btn-outline-danger { border-color: #dc3545; }
+    .api-step { background: #f8f9fa; border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 0.5rem; font-size: 0.9rem; }
   </style>
 </head>
-<body>
-  <div class="admin" id="adminApp">
-    <div id="loginView" class="login-box" style="display:none">
-      <h2>Admin Girişi</h2>
-      <p class="error" id="loginErr"></p>
-      <input type="email" id="adminEmail" placeholder="Email" />
-      <input type="password" id="adminPassword" placeholder="Şifre" />
-      <button id="adminLoginBtn">Giriş</button>
-      <p style="margin-top:1rem; font-size:0.9rem"><a href="index.html" style="color:var(--accent)">← Uygulamaya dön</a></p>
-    </div>
-    <div id="dashboardView" style="display:none">
-      <h1>LeoGPT Admin Panel</h1>
-      <p style="margin-bottom:1.5rem; color:var(--text-secondary)">Hoş geldin, <span id="adminUser"></span> | <a href="index.html" style="color:var(--accent)">Uygulama</a> | <button class="btn" id="logoutAdmin" style="margin-left:0.5rem">Çıkış</button></p>
-
-      <div class="admin-section">
-        <h2>📊 Geri Bildirim İstatistikleri</h2>
-        <div class="stats">
-          <div class="stat-box"><div class="num" id="statLikes">0</div><div class="label">Beğeni 👍</div></div>
-          <div class="stat-box"><div class="num" id="statDislikes">0</div><div class="label">Beğenmeme 👎</div></div>
-          <div class="stat-box"><div class="num" id="statTotal">0</div><div class="label">Toplam</div></div>
-        </div>
-        <details>
-          <summary style="cursor:pointer; margin-bottom:0.5rem">Son geri bildirimler</summary>
-          <div style="max-height:200px; overflow-y:auto">
-            <table id="feedbackTable"><thead><tr><th>Tarih</th><th>Rating</th><th>Kullanıcı</th><th>Yorum</th></tr></thead><tbody></tbody></table>
+<body class="bg-light">
+  <div id="adminApp">
+    <!-- Login -->
+    <div id="loginView" class="d-none">
+      <div class="min-vh-100 d-flex align-items-center justify-content-center p-3">
+        <div class="card shadow-sm" style="max-width: 400px; width: 100%">
+          <div class="card-body p-4">
+            <h2 class="h4 mb-3">Paneli i Adminit</h2>
+            <p class="text-danger small mb-2" id="loginErr"></p>
+            <div class="mb-3">
+              <input type="email" id="adminEmail" class="form-control form-control-lg" placeholder="Email" />
+            </div>
+            <div class="mb-3">
+              <input type="password" id="adminPassword" class="form-control form-control-lg" placeholder="Fjalëkalimi" />
+            </div>
+            <button id="adminLoginBtn" class="btn btn-primary btn-lg w-100 mb-2">Hyr</button>
+            <a href="index.html" class="text-decoration-none small">← Kthehu te aplikacioni</a>
           </div>
-        </details>
-      </div>
-
-      <div class="admin-section">
-        <h2>⚙️ Özellik Açma/Kapama</h2>
-        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem">Bu özellikler ileride persona'ya yansıyacak. Şimdilik ayar olarak kaydediliyor.</p>
-        <div class="feature-toggle"><span>Ses özellikleri</span><div class="toggle-switch" id="feat_voice" data-key="features_voice"></div></div>
-        <div class="feature-toggle"><span>Sohbet özellikleri</span><div class="toggle-switch" id="feat_chat" data-key="features_chat"></div></div>
-        <div class="feature-toggle"><span>Görsel özellikler</span><div class="toggle-switch" id="feat_visual" data-key="features_visual"></div></div>
-        <div class="feature-toggle"><span>Teknik destek</span><div class="toggle-switch" id="feat_tech" data-key="features_tech"></div></div>
-        <div class="feature-toggle"><span>İş & girişim</span><div class="toggle-switch" id="feat_business" data-key="features_business"></div></div>
-        <div class="feature-toggle"><span>Giriş zorunlu</span><div class="toggle-switch" id="feat_login" data-key="require_login"></div></div>
-      </div>
-
-      <div class="admin-section">
-        <h2>🖼 Logo</h2>
-        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem">Uygulama logosu. Tam URL veya yüklediğiniz resmin yolu.</p>
-        <div class="content-item">
-          <input type="text" id="logoUrl" placeholder="https://... veya /uploads/xxx.png" style="flex:2" />
-          <button class="btn" id="saveLogo">Logo Kaydet</button>
         </div>
-        <div id="contentList" style="margin-top:1rem"></div>
       </div>
+    </div>
 
-      <div class="admin-section">
-        <h2>📱 Instagram Hesapları</h2>
-        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem">Bağlı hesaplar sohbet üzerinden istatistik sorgulanabilir. Şifre/token asla sohbette gösterilmez.</p>
-        <div id="igConfigMsg" style="margin-bottom:0.75rem; padding:0.5rem; border-radius:6px; display:none"></div>
-        <button class="btn" id="igConnectBtn" style="margin-bottom:1rem">+ Hesap Bağla</button>
-        <table id="igAccountsTable"><thead><tr><th>@username</th><th>Eklenme</th><th>Son sync</th><th></th></tr></thead><tbody></tbody></table>
-      </div>
+    <!-- Dashboard -->
+    <div id="dashboardView" class="d-none">
+      <nav class="navbar admin-nav navbar-dark mb-4">
+        <div class="container">
+          <span class="navbar-brand mb-0">LeoGPT Admin</span>
+          <div class="d-flex align-items-center gap-2">
+            <span class="text-white-50 small" id="adminUser"></span>
+            <a href="index.html" class="btn btn-sm btn-outline-light">Aplikacioni</a>
+            <button class="btn btn-sm btn-outline-light" id="logoutAdmin">Dil</button>
+          </div>
+        </div>
+      </nav>
 
-      <div class="admin-section">
-        <h2>📤 Resim Yükle</h2>
-        <input type="file" id="fileUpload" accept="image/*" />
-        <button class="btn" id="uploadBtn" style="margin-top:0.5rem">Yükle</button>
-        <p id="uploadResult" style="margin-top:0.5rem; font-size:0.9rem"></p>
-      </div>
+      <div class="container pb-5">
+        <!-- Geri bildirim -->
+        <div class="card mb-4">
+          <div class="card-header bg-white py-3">📊 Statistikat e reagimeve</div>
+          <div class="card-body">
+            <div class="row g-3 mb-3">
+              <div class="col-4"><div class="p-3 bg-light rounded text-center"><div class="h4 mb-0 text-primary" id="statLikes">0</div><small class="text-muted">Pëlqime 👍</small></div></div>
+              <div class="col-4"><div class="p-3 bg-light rounded text-center"><div class="h4 mb-0 text-danger" id="statDislikes">0</div><small class="text-muted">Nuk pëlqej 👎</small></div></div>
+              <div class="col-4"><div class="p-3 bg-light rounded text-center"><div class="h4 mb-0" id="statTotal">0</div><small class="text-muted">Gjithsej</small></div></div>
+            </div>
+            <details><summary class="cursor-pointer">Reagimet e fundit</summary>
+              <div class="table-responsive mt-2" style="max-height:200px"><table class="table table-sm" id="feedbackTable"><thead><tr><th>Data</th><th>Rating</th><th>Përdoruesi</th><th>Koment</th></tr></thead><tbody></tbody></table></div>
+            </details>
+          </div>
+        </div>
 
-      <div class="admin-section">
-        <h2>👥 Kullanıcılar</h2>
-        <table id="usersTable"><thead><tr><th>ID</th><th>Email</th><th>Ad</th><th>Admin</th><th>Kayıt</th></tr></thead><tbody></tbody></table>
+        <!-- Instagram - KU KUSH SI -->
+        <div class="card mb-4 ig-highlight">
+          <div class="card-header bg-white py-3 d-flex align-items-center">
+            <span class="me-2">📱</span>
+            <span>Instagram — Ku shtohen llogaritë? Kush shton? Si?</span>
+          </div>
+          <div class="card-body">
+            <div class="alert alert-info mb-3">
+              <strong>Ku?</strong> Këtu, në këtë panel. <strong>Kush?</strong> Vetëm admin (ti). <strong>Si?</strong> Meta API — shiko hapat më poshtë.
+            </div>
+            <div class="mb-3">
+              <h6 class="text-muted mb-2">API Meta — Çfarë duhet në server/.env:</h6>
+              <div class="api-step"><code>META_APP_ID</code> — Nga developers.facebook.com → Settings → Basic</div>
+              <div class="api-step"><code>META_APP_SECRET</code> — I njëjti vend</div>
+              <div class="api-step"><code>INSTAGRAM_REDIRECT_URI</code> — https://domain-i-yte/api/instagram/callback</div>
+              <p class="small text-muted mt-2">Detaj: <code>INSTAGRAM-NASIL-EKLENIR.md</code> ose <code>INSTAGRAM-BASIT-REHBER.md</code></p>
+            </div>
+            <div id="igConfigMsg" class="alert alert-warning d-none mb-3"></div>
+            <button class="btn btn-primary mb-3" id="igConnectBtn">+ Lidh llogari Instagram</button>
+            <div class="table-responsive">
+              <table class="table table-hover" id="igAccountsTable">
+                <thead><tr><th>@username</th><th>Shtuar më</th><th>Sync i fundit</th><th></th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Veçoritë -->
+        <div class="card mb-4">
+          <div class="card-header bg-white py-3">⚙️ Veçoritë (hap/mbyll)</div>
+          <div class="card-body">
+            <p class="small text-muted mb-3">Këto ruhen si cilësime. Persona i përdor ato.</p>
+            <div class="form-check form-switch mb-2"><input class="form-check-input toggle-switch" id="feat_voice" data-key="features_voice" type="checkbox"><label class="form-check-label">Veçoritë e zërit</label></div>
+            <div class="form-check form-switch mb-2"><input class="form-check-input toggle-switch" id="feat_chat" data-key="features_chat" type="checkbox"><label class="form-check-label">Veçoritë e bisedës</label></div>
+            <div class="form-check form-switch mb-2"><input class="form-check-input toggle-switch" id="feat_visual" data-key="features_visual" type="checkbox"><label class="form-check-label">Veçoritë vizuale</label></div>
+            <div class="form-check form-switch mb-2"><input class="form-check-input toggle-switch" id="feat_tech" data-key="features_tech" type="checkbox"><label class="form-check-label">Mbështetje teknike</label></div>
+            <div class="form-check form-switch mb-2"><input class="form-check-input toggle-switch" id="feat_business" data-key="features_business" type="checkbox"><label class="form-check-label">Biznes & sipërmarrje</label></div>
+            <div class="form-check form-switch mb-2"><input class="form-check-input toggle-switch" id="feat_login" data-key="require_login" type="checkbox"><label class="form-check-label">Hyrë e detyrueshme</label></div>
+            <div class="form-check form-switch"><input class="form-check-input toggle-switch" id="feat_invite" data-key="invite_only" type="checkbox"><label class="form-check-label">Modalitet i ftuar (vetëm të lejuarit regjistrohen)</label></div>
+          </div>
+        </div>
+
+        <!-- Email të lejuar -->
+        <div class="card mb-4">
+          <div class="card-header bg-white py-3">📧 Email të lejuar</div>
+          <div class="card-body">
+            <p class="small text-muted mb-3">Kur modaliteti i ftuar është aktiv, vetëm këta email regjistrohen.</p>
+            <div class="input-group mb-3">
+              <input type="email" id="allowedEmailInput" class="form-control" placeholder="shembull@email.com" />
+              <button class="btn btn-primary" id="addAllowedEmail">Shto</button>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-sm" id="allowedEmailsTable"><thead><tr><th>Email</th><th>Shtuar më</th><th></th></tr></thead><tbody></tbody></table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Logo -->
+        <div class="card mb-4">
+          <div class="card-header bg-white py-3">🖼 Logo</div>
+          <div class="card-body">
+            <div class="input-group mb-2">
+              <input type="text" id="logoUrl" class="form-control" placeholder="https://... ose /uploads/xxx.png" />
+              <button class="btn btn-primary" id="saveLogo">Ruaj</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ngarkim imazhi -->
+        <div class="card mb-4">
+          <div class="card-header bg-white py-3">📤 Ngarko imazh</div>
+          <div class="card-body">
+            <input type="file" id="fileUpload" class="form-control mb-2" accept="image/*" />
+            <button class="btn btn-primary" id="uploadBtn">Ngarko</button>
+            <p class="small mt-2 text-muted" id="uploadResult"></p>
+          </div>
+        </div>
+
+        <!-- Përdoruesit -->
+        <div class="card mb-4">
+          <div class="card-header bg-white py-3">👥 Përdoruesit</div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table mb-0" id="usersTable"><thead><tr><th>ID</th><th>Email</th><th>Emri</th><th>Admin</th><th>Regjistruar</th></tr></thead><tbody></tbody></table>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="config.js"></script>
   <script>
-    const BACKEND = (typeof LEOHOCA_BACKEND !== 'undefined' && LEOHOCA_BACKEND) ? LEOHOCA_BACKEND.replace(/\/$/, '') : (localStorage.getItem('leohoca_backend') || location.origin);
+    const BACKEND = (typeof LEOHOCA_BACKEND !== 'undefined' && LEOHOCA_BACKEND) ? LEOHOCA_BACKEND.replace(/\/$/, '') : (localStorage.getItem('leohoca_backend') || (location.origin && location.origin !== 'null' ? location.origin : 'http://localhost:3100'));
     let token = localStorage.getItem('leogpt_token');
 
     function api(path, opts = {}) {
@@ -118,44 +176,50 @@
     }
 
     function showLogin() {
-      document.getElementById('loginView').style.display = 'block';
-      document.getElementById('dashboardView').style.display = 'none';
+      document.getElementById('loginView').classList.remove('d-none');
+      document.getElementById('dashboardView').classList.add('d-none');
     }
 
     function showDashboard() {
-      document.getElementById('loginView').style.display = 'none';
-      document.getElementById('dashboardView').style.display = 'block';
+      document.getElementById('loginView').classList.add('d-none');
+      document.getElementById('dashboardView').classList.remove('d-none');
       loadData();
     }
 
     async function checkAuth() {
       if (!token) { showLogin(); return; }
-      const r = await api('/api/admin/check');
-      const d = await r.json();
-      if (d.ok && d.admin) {
-        const user = JSON.parse(localStorage.getItem('leogpt_user') || '{}');
-        document.getElementById('adminUser').textContent = user.email || 'Admin';
-        showDashboard();
-      } else showLogin();
+      try {
+        const r = await api('/api/admin/check');
+        const d = await r.json();
+        if (d.ok && d.admin) {
+          const user = JSON.parse(localStorage.getItem('leogpt_user') || '{}');
+          document.getElementById('adminUser').textContent = user.email || 'Admin';
+          showDashboard();
+        } else showLogin();
+      } catch (_) { showLogin(); }
     }
 
     document.getElementById('adminLoginBtn')?.addEventListener('click', async () => {
       const err = document.getElementById('loginErr');
+      const btn = document.getElementById('adminLoginBtn');
       err.textContent = '';
       const email = document.getElementById('adminEmail').value.trim();
       const password = document.getElementById('adminPassword').value;
-      if (!email || !password) { err.textContent = 'Email ve şifre girin'; return; }
-      const r = await fetch(BACKEND + '/api/auth/login', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
-      const d = await r.json();
-      if (d.ok && d.user?.is_admin) {
-        token = d.token;
-        localStorage.setItem('leogpt_token', token);
-        localStorage.setItem('leogpt_user', JSON.stringify(d.user));
-        showDashboard();
-      } else err.textContent = d.error || 'Yetkisiz - Admin hesabı gerekli';
+      if (!email || !password) { err.textContent = 'Vendosni email dhe fjalëkalim'; return; }
+      btn.disabled = true;
+      btn.textContent = 'Duke hyrë...';
+      try {
+        const r = await fetch(BACKEND + '/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) });
+        const d = await r.json().catch(() => ({}));
+        if (d.ok && d.user?.is_admin) {
+          token = d.token;
+          localStorage.setItem('leogpt_token', token);
+          localStorage.setItem('leogpt_user', JSON.stringify(d.user));
+          showDashboard();
+        } else err.textContent = d.error || 'E pamundur — kërkohet llogari admin';
+      } catch (e) { err.textContent = 'Gabim lidhjeje. A është serveri aktiv?'; }
+      btn.disabled = false;
+      btn.textContent = 'Hyr';
     });
 
     document.getElementById('logoutAdmin')?.addEventListener('click', () => {
@@ -169,8 +233,8 @@
       const params = new URLSearchParams(location.search);
       const ok = params.get('ig_ok');
       const err = params.get('ig_error');
-      if (ok) { alert('Instagram hesabı bağlandı: @' + ok); history.replaceState({}, '', location.pathname); }
-      if (err) { alert('Instagram hatası: ' + err); history.replaceState({}, '', location.pathname); }
+      if (ok) { alert('Instagram u lidh: @' + ok); history.replaceState({}, '', location.pathname); }
+      if (err) { alert('Gabim Instagram: ' + err); history.replaceState({}, '', location.pathname); }
     }
 
     async function loadIgAccounts() {
@@ -179,63 +243,63 @@
       const msgEl = document.getElementById('igConfigMsg');
       const btn = document.getElementById('igConnectBtn');
       if (!cfg.configured) {
-        msgEl.style.display = 'block';
-        msgEl.style.background = '#fef3c7';
-        msgEl.textContent = 'META_APP_ID, META_APP_SECRET, INSTAGRAM_REDIRECT_URI ekleyin (.env)';
+        msgEl.classList.remove('d-none');
+        msgEl.textContent = 'Shtoni META_APP_ID, META_APP_SECRET, INSTAGRAM_REDIRECT_URI në server/.env. Shiko INSTAGRAM-NASIL-EKLENIR.md';
         btn.disabled = true;
         return;
       }
-      msgEl.style.display = 'none';
+      msgEl.classList.add('d-none');
       btn.disabled = false;
       btn.onclick = async () => {
         const r = await api('/api/instagram/connect');
         const d = await r.json();
         if (d.url) window.location.href = d.url;
-        else alert(d.error || 'Bağlantı alınamadı');
+        else alert(d.error || 'Nuk u mor lidhja');
       };
       const r = await api('/api/admin/instagram/accounts');
       const d = await r.json();
       const tbody = document.querySelector('#igAccountsTable tbody');
       if (d.ok && d.accounts?.length) {
         tbody.innerHTML = d.accounts.map(a => `
-          <tr>
-            <td><strong>@${a.username}</strong></td>
-            <td>${new Date(a.created_at).toLocaleDateString()}</td>
-            <td>${a.last_sync_at ? new Date(a.last_sync_at).toLocaleString() : '-'}</td>
-            <td><button class="content-item button" style="padding:0.25rem 0.5rem; font-size:0.8rem" onclick="delIgAccount(${a.id})">Sil</button></td>
-          </tr>
+          <tr><td><strong>@${a.username}</strong></td><td>${new Date(a.created_at).toLocaleDateString('sq-AL')}</td><td>${a.last_sync_at ? new Date(a.last_sync_at).toLocaleString('sq-AL') : '-'}</td><td><button class="btn btn-sm btn-outline-danger" onclick="delIgAccount(${a.id})">Hiq</button></td></tr>
         `).join('');
-      } else tbody.innerHTML = '<tr><td colspan="4">Henüz hesap yok.</td></tr>';
+      } else tbody.innerHTML = '<tr><td colspan="4">Ende nuk ka llogari.</td></tr>';
     }
 
     async function delIgAccount(id) {
-      if (!confirm('Bu hesabı kaldırmak istediğinize emin misiniz?')) return;
+      if (!confirm('Të hiqet kjo llogari?')) return;
       await api('/api/admin/instagram/accounts/' + id, { method: 'DELETE' });
       loadIgAccounts();
     }
 
+    async function delAllowedEmail(id) {
+      if (!confirm('Të hiqet ky email?')) return;
+      await api('/api/admin/allowed-emails/' + id, { method: 'DELETE' });
+      loadData();
+    }
+
     async function loadData() {
       handleIgCallback();
-      const [fbRes, setRes, contentRes, usersRes] = await Promise.all([
+      const [fbRes, setRes, contentRes, usersRes, allowedRes] = await Promise.all([
         api('/api/admin/feedback'),
         api('/api/admin/settings'),
         api('/api/admin/content'),
-        api('/api/admin/users')
+        api('/api/admin/users'),
+        api('/api/admin/allowed-emails')
       ]);
       const fb = await fbRes.json();
       const set = await setRes.json();
       const content = await contentRes.json();
       const users = await usersRes.json();
+      const allowed = await allowedRes.json();
 
       if (fb.ok) {
-        const likes = (fb.stats?.find(s => s.rating === 1)?.c || 0);
-        const dislikes = (fb.stats?.find(s => s.rating === -1)?.c || 0);
-        document.getElementById('statLikes').textContent = likes;
-        document.getElementById('statDislikes').textContent = dislikes;
-        document.getElementById('statTotal').textContent = (fb.feedback?.length || 0);
+        document.getElementById('statLikes').textContent = fb.stats?.find(s => s.rating === 1)?.c || 0;
+        document.getElementById('statDislikes').textContent = fb.stats?.find(s => s.rating === -1)?.c || 0;
+        document.getElementById('statTotal').textContent = fb.feedback?.length || 0;
         const tbody = document.querySelector('#feedbackTable tbody');
-        tbody.innerHTML = (fb.feedback || []).slice(0, 20).map(f => 
-          `<tr><td>${new Date(f.created_at).toLocaleString()}</td><td>${f.rating === 1 ? '👍' : '👎'}</td><td>${f.email || '-'}</td><td>${(f.comment || '').slice(0, 50)}</td></tr>`
+        tbody.innerHTML = (fb.feedback || []).slice(0, 20).map(f =>
+          `<tr><td>${new Date(f.created_at).toLocaleString('sq-AL')}</td><td>${f.rating === 1 ? '👍' : '👎'}</td><td>${f.email || '-'}</td><td>${(f.comment || '').slice(0, 50)}</td></tr>`
         ).join('');
       }
 
@@ -243,9 +307,9 @@
         document.querySelectorAll('.toggle-switch').forEach(el => {
           const key = el.dataset.key;
           const val = set.settings?.[key];
-          el.classList.toggle('on', val !== '0' && val !== undefined);
-          el.onclick = () => {
-            const newVal = el.classList.toggle('on') ? '1' : '0';
+          el.checked = val !== '0' && val !== undefined;
+          el.onchange = () => {
+            const newVal = el.checked ? '1' : '0';
             api('/api/admin/settings', { method: 'PUT', body: JSON.stringify({ key, value: newVal }) }).then(() => {});
           };
         });
@@ -259,39 +323,46 @@
 
       if (users.ok) {
         document.querySelector('#usersTable tbody').innerHTML = (users.users || []).map(u =>
-          `<tr><td>${u.id}</td><td>${u.email}</td><td>${u.name || '-'}</td><td>${u.is_admin ? '✓' : '-'}</td><td>${new Date(u.created_at).toLocaleDateString()}</td></tr>`
+          `<tr><td>${u.id}</td><td>${u.email}</td><td>${u.name || '-'}</td><td>${u.is_admin ? '✓' : '-'}</td><td>${new Date(u.created_at).toLocaleDateString('sq-AL')}</td></tr>`
         ).join('');
+      }
+      if (allowed.ok) {
+        const tbody = document.querySelector('#allowedEmailsTable tbody');
+        tbody.innerHTML = allowed.emails?.length ? allowed.emails.map(e =>
+          `<tr><td>${e.email}</td><td>${new Date(e.created_at).toLocaleDateString('sq-AL')}</td><td><button class="btn btn-sm btn-outline-danger" onclick="delAllowedEmail(${e.id})">Hiq</button></td></tr>`
+        ).join('') : '<tr><td colspan="3">Ende nuk ka email të lejuar.</td></tr>';
       }
       loadIgAccounts();
     }
 
-    async function delContent(type, key) {
-      await api(`/api/admin/content/${type}/${key}`, { method: 'DELETE' });
-      loadData();
-    }
+    document.getElementById('addAllowedEmail')?.addEventListener('click', async () => {
+      const input = document.getElementById('allowedEmailInput');
+      const email = (input?.value || '').trim();
+      if (!email || !email.includes('@')) { alert('Vendosni email të vlefshëm'); return; }
+      const r = await api('/api/admin/allowed-emails', { method: 'POST', body: JSON.stringify({ email }) });
+      const d = await r.json();
+      if (d.ok) { input.value = ''; loadData(); }
+      else alert(d.error || 'Gabim');
+    });
 
     document.getElementById('saveLogo')?.addEventListener('click', async () => {
       const url = document.getElementById('logoUrl').value.trim();
-      if (!url) { alert('Logo URL girin'); return; }
+      if (!url) { alert('Vendosni URL për logo'); return; }
       await api('/api/admin/content', { method: 'POST', body: JSON.stringify({ type: 'custom', key: 'logo_url', value: url }) });
       await api('/api/admin/settings', { method: 'PUT', body: JSON.stringify({ key: 'app_logo_url', value: url }) });
-      alert('Logo kaydedildi');
+      alert('Logo u ruajt');
       loadData();
     });
 
     document.getElementById('uploadBtn')?.addEventListener('click', async () => {
       const file = document.getElementById('fileUpload').files[0];
-      if (!file) { document.getElementById('uploadResult').textContent = 'Dosya seçin'; return; }
+      if (!file) { document.getElementById('uploadResult').textContent = 'Zgjidhni një skedar'; return; }
       const fd = new FormData();
       fd.append('file', file);
-      const r = await fetch(BACKEND + '/api/admin/upload', {
-        method: 'POST',
-        headers: token ? { Authorization: 'Bearer ' + token } : {},
-        body: fd
-      });
+      const r = await fetch(BACKEND + '/api/admin/upload', { method: 'POST', headers: token ? { Authorization: 'Bearer ' + token } : {}, body: fd });
       const d = await r.json();
       const resultEl = document.getElementById('uploadResult');
-      resultEl.textContent = d.ok ? 'Yüklendi: ' + d.url : (d.error || 'Hata');
+      resultEl.textContent = d.ok ? 'U ngarkua: ' + d.url : (d.error || 'Gabim');
       if (d.ok) {
         document.getElementById('fileUpload').value = '';
         document.getElementById('logoUrl').value = d.url.startsWith('http') ? d.url : (BACKEND + d.url);

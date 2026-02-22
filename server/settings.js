@@ -35,7 +35,8 @@ function getFeatureFlags() {
     visual: s.features_visual !== '0',
     tech: s.features_tech !== '0',
     business: s.features_business !== '0',
-    requireLogin: s.require_login === '1'
+    requireLogin: s.require_login === '1',
+    inviteOnly: s.invite_only !== '0'
   };
 }
 
