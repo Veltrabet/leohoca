@@ -189,11 +189,13 @@ router.get('/instagram/connect', auth.requireAuth, auth.requireAdmin, (req, res)
 });
 
 router.get('/instagram/callback', async (req, res) => {
-  const { code, state, error } = req.query;
+  const { code, state, error, error_reason, error_description, message } = req.query;
   const proto = req.get('x-forwarded-proto') || req.protocol;
   const host = req.get('x-forwarded-host') || req.get('host');
   const adminUrl = `${proto}://${host}/admin.html`;
-  if (error) return res.redirect(adminUrl + '?ig_error=' + encodeURIComponent(error));
+  console.log('[Instagram callback] query:', JSON.stringify(req.query));
+  const errMsg = error || error_reason || error_description || message;
+  if (errMsg) return res.redirect(adminUrl + '?ig_error=' + encodeURIComponent(errMsg));
   if (!code) return res.redirect(adminUrl + '?ig_error=code_yok');
   try {
     const data = await ig.exchangeCodeForToken(code);
@@ -220,6 +222,23 @@ router.delete('/admin/instagram/accounts/:id', auth.requireAuth, auth.requireAdm
   res.json({ ok: true });
 });
 
+router.post('/admin/instagram/add-token', auth.requireAuth, auth.requireAdmin, async (req, res) => {
+  const { token: accessToken } = req.body;
+  if (!accessToken || typeof accessToken !== 'string') return res.status(400).json({ ok: false, error: 'Token gerekli' });
+  try {
+    const longToken = await ig.getLongLivedToken(accessToken.trim()).catch(() => accessToken.trim());
+    const userInfo = await ig.getIgUserInfo(longToken);
+    const tokenToStore = longToken || accessToken.trim();
+    const encrypted = ig.encryptToken(tokenToStore);
+    db.prepare('INSERT OR REPLACE INTO instagram_accounts (username, instagram_user_id, access_token, last_sync_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)')
+      .run(userInfo.username, userInfo.id, encrypted);
+    res.json({ ok: true, username: userInfo.username });
+  } catch (e) {
+    console.error('Instagram add-token:', e);
+    res.status(400).json({ ok: false, error: e.message || 'Token geçersiz' });
+  }
+});
+
 router.get('/instagram/stats/:username', (req, res) => {
   const { username } = req.params;
   const row = db.prepare('SELECT instagram_user_id, access_token FROM instagram_accounts WHERE LOWER(username) = LOWER(?)').get(username);
@@ -235,6 +254,15 @@ router.get('/instagram/stats/:username', (req, res) => {
 
 router.get('/instagram/configured', (req, res) => {
   res.json({ configured: ig.isConfigured() });
+});
+
+router.get('/instagram/debug', (req, res) => {
+  const id = process.env.META_APP_ID || '';
+  res.json({
+    configured: ig.isConfigured(),
+    appIdPrefix: id ? id.slice(0, 4) + '...' + id.slice(-4) : null,
+    redirectUri: process.env.INSTAGRAM_REDIRECT_URI || ''
+  });
 });
 
 module.exports = router;

@@ -37,6 +37,26 @@ Kayıt, giriş ve admin paneli için:
 | `ADMIN_PASSWORD` | guvenli_sifre |
 | `JWT_SECRET` | rastgele_uzun_anahtar (min 32 karakter) |
 
+---
+
+## Instagram Bağlantısı (Invalid platform app önlemek için)
+
+**ÖNEMLİ:** Railway `.env` dosyasını kullanmaz. Değişkenleri **Variables** sekmesinden ekleyin.
+
+1. Railway → Projeniz → **Variables** → **+ New Variable** (veya **Raw Editor**)
+2. Şu 3 değişkeni ekleyin:
+
+| Name | Value |
+|------|-------|
+| `META_APP_ID` | `1242959117925253` (Meta → Instagram → Business login settings'ten) |
+| `META_APP_SECRET` | Instagram App Secret (Business login settings'ten) |
+| `INSTAGRAM_REDIRECT_URI` | `https://leohoca.up.railway.app/api/instagram/callback` |
+
+3. **Kaydedin** — Railway otomatik yeniden deploy eder.
+4. Deploy bitince admin panelden **+ Lidh llogari Instagram** deneyin.
+
+**Yanlış App ID kullanırsanız "Invalid platform app" hatası alırsınız.** Settings → Basic'teki App ID değil, **Instagram → API setup with Instagram login → Business login settings** içindeki **Instagram App ID** kullanın.
+
 ## Kontrol Listesi
 
 - [x] GitHub'a push edildi
@@ -44,6 +64,7 @@ Kayıt, giriş ve admin paneli için:
 - [x] Domain: leohoca.up.railway.app
 - [ ] **GROQ_API_KEY** eklendi (Variables)
 - [ ] **ADMIN_EMAIL**, **ADMIN_PASSWORD**, **JWT_SECRET** (admin paneli)
+- [ ] **META_APP_ID**, **META_APP_SECRET**, **INSTAGRAM_REDIRECT_URI** (Instagram)
 - [ ] **LEOHOCA_PASSWORD** (opsiyonel - şifre koruması)
 
 ---

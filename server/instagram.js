@@ -15,8 +15,8 @@ function isConfigured() {
 
 function getConnectUrl() {
   if (!isConfigured()) return null;
-  const scope = 'instagram_business_basic,instagram_manage_insights';
-  return `https://api.instagram.com/oauth/authorize?client_id=${META_APP_ID}&redirect_uri=${encodeURIComponent(INSTAGRAM_REDIRECT_URI)}&scope=${scope}&response_type=code`;
+  const scope = 'instagram_business_basic,instagram_business_manage_insights';
+  return `https://www.instagram.com/oauth/authorize?client_id=${META_APP_ID}&redirect_uri=${encodeURIComponent(INSTAGRAM_REDIRECT_URI)}&scope=${scope}&response_type=code`;
 }
 
 async function exchangeCodeForToken(code) {
@@ -31,8 +31,9 @@ async function exchangeCodeForToken(code) {
       code
     })
   });
-  const data = await res.json();
-  if (data.error) throw new Error(data.error_message || data.error?.message || data.error || 'Token alınamadı');
+  const raw = await res.json();
+  if (raw.error) throw new Error(raw.error_message || raw.error?.message || raw.error || 'Token alınamadı');
+  const data = raw.data?.[0] || raw;
   if (!data.access_token) throw new Error('access_token nuk u kthye nga Meta');
   return data;
 }

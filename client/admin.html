@@ -88,7 +88,17 @@
               <p class="small text-muted mt-2">Detaj: <code>INSTAGRAM-NASIL-EKLENIR.md</code> ose <code>INSTAGRAM-BASIT-REHBER.md</code></p>
             </div>
             <div id="igConfigMsg" class="alert alert-warning d-none mb-3"></div>
-            <button class="btn btn-primary mb-3" id="igConnectBtn">+ Lidh llogari Instagram</button>
+            <div class="d-flex flex-wrap gap-2 mb-3">
+              <button class="btn btn-primary" id="igConnectBtn">+ Lidh llogari Instagram (OAuth)</button>
+              <button class="btn btn-outline-secondary" id="igTokenBtn">Shto me token (nga Meta)</button>
+            </div>
+            <div id="igTokenForm" class="mb-3 d-none">
+              <label class="form-label small">Token nga Meta → Generate token (kopjo dhe ngjit këtu):</label>
+              <div class="input-group">
+                <input type="password" id="igTokenInput" class="form-control" placeholder="IGQA..." />
+                <button class="btn btn-success" id="igTokenSubmit">Shto</button>
+              </div>
+            </div>
             <div class="table-responsive">
               <table class="table table-hover" id="igAccountsTable">
                 <thead><tr><th>@username</th><th>Shtuar më</th><th>Sync i fundit</th><th></th></tr></thead>
@@ -229,12 +239,19 @@
       showLogin();
     });
 
-    function handleIgCallback() {
+    async function handleIgCallback() {
       const params = new URLSearchParams(location.search);
       const ok = params.get('ig_ok');
       const err = params.get('ig_error');
-      if (ok) { alert('Instagram u lidh: @' + ok); history.replaceState({}, '', location.pathname); }
-      if (err) { alert('Gabim Instagram: ' + err); history.replaceState({}, '', location.pathname); }
+      if (ok) { alert('Instagram u lidh: @' + ok); history.replaceState({}, '', location.pathname); return; }
+      if (err) {
+        let msg = 'Gabim Instagram: ' + err;
+        if (err === 'code_yok') {
+          msg += '\n\nKontrollo:\n1. Meta → Set up Instagram business login → OAuth redirect URIs: https://leohoca.up.railway.app/api/instagram/callback\n2. Meta → Add account → Instagram hesabını "Instagram Tester" olarak ekle\n3. Instagram sayfasında "İzin ver" butonuna tıkla';
+        }
+        alert(msg);
+        history.replaceState({}, '', location.pathname);
+      }
     }
 
     async function loadIgAccounts() {
@@ -255,6 +272,19 @@
         const d = await r.json();
         if (d.url) window.location.href = d.url;
         else alert(d.error || 'Nuk u mor lidhja');
+      };
+      const tokenBtn = document.getElementById('igTokenBtn');
+      const tokenForm = document.getElementById('igTokenForm');
+      const tokenInput = document.getElementById('igTokenInput');
+      const tokenSubmit = document.getElementById('igTokenSubmit');
+      if (tokenBtn) tokenBtn.onclick = () => { tokenForm.classList.toggle('d-none'); };
+      if (tokenSubmit) tokenSubmit.onclick = async () => {
+        const t = tokenInput?.value?.trim();
+        if (!t) { alert('Vendosni tokenin'); return; }
+        const r = await api('/api/admin/instagram/add-token', { method: 'POST', body: JSON.stringify({ token: t }) });
+        const d = await r.json();
+        if (d.ok) { alert('Instagram u lidh: @' + d.username); tokenInput.value = ''; tokenForm.classList.add('d-none'); loadIgAccounts(); }
+        else alert(d.error || 'Gabim');
       };
       const r = await api('/api/admin/instagram/accounts');
       const d = await r.json();
@@ -279,7 +309,7 @@
     }
 
     async function loadData() {
-      handleIgCallback();
+      await handleIgCallback();
       const [fbRes, setRes, contentRes, usersRes, allowedRes] = await Promise.all([
         api('/api/admin/feedback'),
         api('/api/admin/settings'),
