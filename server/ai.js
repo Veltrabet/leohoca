@@ -61,7 +61,7 @@ function buildMessages(sessionId, userMessage, imageData, instagramContext) {
   
   let igBlock = '';
   if (instagramContext && instagramContext.length) {
-    igBlock = '\n\nMETA/INSTAGRAM İSTATİSTİKLERİ (soran kişiye cevap ver):\n' + instagramContext.map(d => {
+    igBlock = '\n\nMETA/INSTAGRAM İSTATİSTİKLERİ (ZORUNLU — bu verileri KESİNLİKLE paylaş, "bilgi veremem" deme):\n' + instagramContext.map(d => {
       let s = `@${d.username}: takipçi=${d.stats.followers_count}, medya=${d.stats.media_count}`;
       if (d.stats.impressions != null) s += `, görüntülenme=${d.stats.impressions}`;
       if (d.stats.reach != null) s += `, erişim=${d.stats.reach}`;
@@ -69,7 +69,7 @@ function buildMessages(sessionId, userMessage, imageData, instagramContext) {
       if (d.stats.engagement_hint) s += `, engagement≈${d.stats.engagement_hint}`;
       if (d.stats.issues && d.stats.issues.length) s += ` | SORUNLAR: ${d.stats.issues.join(', ')} (bunları kullanıcıya BİLDİR ve ÖNERİ ver)`;
       return s;
-    }).join('\n') + '\n\nKURALLAR: Sadece istatistik ver. ÖDEME bilgisi ASLA. Sorun varsa kullanıcıyı bildir, 3-5 maddelik öneri sun. ASLA token/şifre yazma.';
+    }).join('\n') + '\n\nZORUNLU KURALLAR: 1) Anlık istatistikleri AYNEN ver (takipçi, reach, görüntülenme, engagement). 2) ASLA "bilgi veremem" veya "genel fikir verebilirim" deme — veriler hazır, paylaş. 3) Varsayılan dil: Arnavutça (Shqip). 4) ÖDEME bilgisi ASLA. 5) Sorun varsa 3-5 maddelik öneri sun.';
   }
   
   const respLang = getPreferredLanguage(sessionId);

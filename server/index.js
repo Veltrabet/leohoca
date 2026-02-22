@@ -141,11 +141,14 @@ wss.on('connection', (ws, req) => {
 
           let instagramContext = [];
           const t = (text || '').toLowerCase();
-          const hasIgIntent = /\b(istatistik|istatistikler|instagram|hesap|nasıl gidiyor|özet|performans|takipçi|follower|reklam|hata|bildirim|reach|erişim|görüntülenme)\b/i.test(t);
+          const hasIgIntent = /\b(istatistik|statistik|statistikat|instagram|meta|business|hesap|nasıl gidiyor|si po shkon|özet|përmbledhje|performans|takipçi|ndjekës|follower|reklam|hata|bildirim|reach|erişim|arritje|görüntülenme|pamje|kontroll|kontrolloj)\b/i.test(t);
           if (hasIgIntent) {
             const mentions = (t.match(/@([a-zA-Z0-9_.]+)/g) || []).map(m => m.slice(1));
             const accounts = db.prepare('SELECT username, instagram_user_id, access_token FROM instagram_accounts').all();
-            const usernames = mentions.length ? mentions.filter(u => accounts.some(a => a.username.toLowerCase() === u.toLowerCase())) : accounts.map(a => a.username);
+            const norm = (u) => (u || '').toLowerCase().replace(/_/g, '');
+            const usernames = mentions.length
+              ? accounts.filter(a => mentions.some(m => norm(a.username) === norm(m) || norm(a.username).startsWith(norm(m)))).map(a => a.username)
+              : accounts.map(a => a.username);
             for (const un of usernames.slice(0, 5)) {
               try {
                 const row = accounts.find(a => a.username.toLowerCase() === un.toLowerCase()) || db.prepare('SELECT instagram_user_id, access_token FROM instagram_accounts WHERE LOWER(username) = LOWER(?)').get(un);
