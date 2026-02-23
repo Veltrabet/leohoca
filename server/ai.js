@@ -73,9 +73,12 @@ function buildMessages(sessionId, userMessage, imageData, instagramContext) {
       line += `- Haftalık görüntülenme: ${s.impressions_week ?? '-'} (${f.impressions_week || '-'})\n`;
       line += `- Profil görüntüleme (günlük): ${s.profile_views ?? 0}\n`;
       if (s.engagement_hint) line += `- Engagement oranı: ${s.engagement_hint}\n`;
-      if (s.issues && s.issues.length) line += `- SORUNLAR: ${s.issues.join(', ')} → kullanıcıya bildir, 3-5 öneri sun\n`;
+      if (s.issues && s.issues.length) {
+        const issueMap = { reach_sifir: 'Reach 0 (içerik görünmüyor)', dusuk_goruntulenme: 'Düşük görüntülenme', dusuk_erisim_orani: 'Düşük erişim oranı', profil_goruntulenme_yok: 'Profil görüntülenmesi yok' };
+        line += `- SORUNLAR: ${s.issues.map(i => issueMap[i] || i).join('; ')} → analiz et, somut öneri ver\n`;
+      }
       return line;
-    }).join('\n') + '\n\nKRİTİK: Yukarıdaki rakamlar Meta Instagram API\'den alındı. ZORUNLU: 1) Sadece bu rakamları yaz. 2) Sonunda ekle: "Të dhënat nga Meta API — mund të vonojnë deri në 48 orë." (Veriler Meta API\'den, 48 saate kadar gecikmeli olabilir.) 3) Meta Business\'ta gördüğün sayılardan farklı olabilir — API aynı veriyi kullanır ama Meta 48 saat gecikme koyuyor.';
+    }).join('\n') + '\n\nGÖREV: 1) Önce rakamları listele (Ndjekës, Arritje, Pamje...). 2) ANALİZ yap: Güçlü yönler neler? Neyi iyileştirebilir? 3) 3-5 somut ÖNERİ ver (içerik saati, hashtag stratejisi, post sıklığı, görsel kalitesi). 4) Müşteri sorusuna tam cevap ver — sen işletmenin sosyal medya asistanısın. 5) Sonunda: "Të dhënat nga Meta API — mund të vonojnë deri në 48 orë."';
   } else if (userMessage && /\b(istatistik|statistik|instagram|prestigex|meta|reach|ndjekës|si po shkon)\b/i.test(userMessage)) {
     igBlock = '\n\nUYARI: Instagram verisi alınamadı (API hatası veya hesap eşleşmedi). Kullanıcıya "Të dhënat nuk u morën në këtë moment" veya "Veri şu an alınamıyor" de. ASLA sahte/örnek rakam uydurma.';
   }
