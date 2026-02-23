@@ -243,7 +243,9 @@ router.post('/admin/instagram/add-token', auth.requireAuth, auth.requireAdmin, a
 
 router.get('/instagram/stats/:username', (req, res) => {
   const { username } = req.params;
-  const row = db.prepare('SELECT instagram_user_id, access_token FROM instagram_accounts WHERE LOWER(username) = LOWER(?)').get(username);
+  const norm = (u) => (u || '').toLowerCase().replace(/_/g, '');
+  const rows = db.prepare('SELECT username, instagram_user_id, access_token FROM instagram_accounts').all();
+  const row = rows.find(r => r.username.toLowerCase() === username.toLowerCase() || norm(r.username) === norm(username) || norm(r.username).startsWith(norm(username)));
   if (!row) return res.status(404).json({ ok: false, error: 'Hesap bulunamadı. Admin panelden ekleyin.' });
   const token = ig.decryptToken(row.access_token);
   ig.fetchAccountStats(token, row.instagram_user_id)

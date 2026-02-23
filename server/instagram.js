@@ -101,9 +101,7 @@ async function fetchAccountStats(accessToken, igUserId) {
   let dayInsights = {};
   let weekInsights = {};
   try {
-    const now = Math.floor(Date.now() / 1000);
-    const dayAgo = now - 86400 * 2;
-    const dayRes = await fetch(`https://graph.instagram.com/${igUserId}/insights?metric=impressions,reach,profile_views&period=day&since=${dayAgo}&until=${now}&access_token=${encodeURIComponent(clean)}`);
+    const dayRes = await fetch(`https://graph.instagram.com/${igUserId}/insights?metric=impressions,reach,profile_views&period=day&access_token=${encodeURIComponent(clean)}`);
     const dayData = await dayRes.json();
     if (dayData.data) dayInsights = Object.fromEntries(dayData.data.map(d => [d.name, parseInsightValue(d)]));
     else if (dayData.error) console.error('[Instagram insights day]', dayData.error?.message || dayData.error);
@@ -111,9 +109,7 @@ async function fetchAccountStats(accessToken, igUserId) {
     console.error('[Instagram insights day]', e.message);
   }
   try {
-    const now = Math.floor(Date.now() / 1000);
-    const weekAgo = now - 86400 * 7;
-    const weekRes = await fetch(`https://graph.instagram.com/${igUserId}/insights?metric=impressions,reach,profile_views&period=week&since=${weekAgo}&until=${now}&access_token=${encodeURIComponent(clean)}`);
+    const weekRes = await fetch(`https://graph.instagram.com/${igUserId}/insights?metric=impressions,reach,profile_views&period=week&access_token=${encodeURIComponent(clean)}`);
     const weekData = await weekRes.json();
     if (weekData.data) weekInsights = Object.fromEntries(weekData.data.map(d => [d.name, parseInsightValue(d)]));
     else if (weekData.error) console.error('[Instagram insights week]', weekData.error?.message || weekData.error);
@@ -143,6 +139,7 @@ async function fetchAccountStats(accessToken, igUserId) {
     profile_views: profileViews,
     reach_week: reachWeek,
     impressions_week: impressionsWeek,
+    _meta: { fetched_at: new Date().toISOString(), delay_note: 'Meta API: veriler 48 saate kadar gecikmeli olabilir' },
     formatted: {
       followers: formatNum(followers),
       reach: formatNum(reach),
