@@ -141,23 +141,33 @@ wss.on('connection', (ws, req) => {
           ws.send(JSON.stringify({ type: 'ai_start' }));
 
           // Image generation intent (only when text, not when user sends image)
-          const hasImageIntent = !image && text && /(krijo|bëj|gjenero).*(imazh|foto|vizatim)|(imazh|foto|vizatim).*(krijo|bëj|gjenero)|create\s+image|generate\s+image|\bdraw\b|resim\s+yap|fotoğraf\s+oluştur|görsel\s+oluştur/i.test(text);
-          if (hasImageIntent && imagegen.isConfigured()) {
-            try {
-              const result = await imagegen.generateImage(text, {});
+          const hasImageIntent = !image && text && /(krijo|bëj|gjenero|yap|oluştur|create|generate|draw|make).*(imazh|foto|vizatim|resim|image|picture|görsel|fotoğraf)|(imazh|foto|vizatim|resim|image|picture|görsel|fotoğraf).*(krijo|bëj|gjenero|yap|oluştur|create|generate|draw|make)|resim\s+yap|fotoğraf\s+oluştur|görsel\s+oluştur|create\s+image|generate\s+image/i.test(text);
+          if (hasImageIntent) {
+            if (imagegen.isConfigured()) {
+              try {
+                const result = await imagegen.generateImage(text, {});
+                if (ws.readyState === 1) {
+                  ws.send(JSON.stringify({
+                    type: 'image_generated',
+                    base64: result.base64,
+                    mimeType: result.mimeType || 'image/png',
+                    prompt: text,
+                    caption: 'Ja imazhi i gjeneruar!'
+                  }));
+                }
+                break;
+              } catch (e) {
+                console.error('[Image gen]', e.message);
+                // fall through to AI for explanation
+              }
+            } else {
+              // IMAGE_GEN_URL yok - kullanıcıya kurulum talimatı gönder
               if (ws.readyState === 1) {
-                ws.send(JSON.stringify({
-                  type: 'image_generated',
-                  base64: result.base64,
-                  mimeType: result.mimeType || 'image/png',
-                  prompt: text,
-                  caption: 'Ja imazhi i gjeneruar!'
-                }));
+                ws.send(JSON.stringify({ type: 'ai_start' }));
+                const setupMsg = 'Gjenerimi i imazheve nuk është konfiguruar. Për të gjeneruar imazhe:\n\n1. Instaloni Stable Diffusion (AUTOMATIC1111) ose Fooocus\n2. Shtoni në .env: IMAGE_GEN_URL=http://localhost:7860\n3. Ose për Fooocus: IMAGE_GEN_URL=http://localhost:7865 dhe IMAGE_GEN_BACKEND=fooocus\n\nTë dyja janë falas dhe pa kufizime.';
+                ws.send(JSON.stringify({ type: 'ai_complete', content: setupMsg, language: 'sq-AL' }));
               }
               break;
-            } catch (e) {
-              console.error('[Image gen]', e.message);
-              // fall through to AI for explanation
             }
           }
 
