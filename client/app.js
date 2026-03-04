@@ -1,10 +1,33 @@
 /**
- * LeoHoca - Real-time Voice AI Assistant
- * Client: WebSocket, Speech-to-Text, Text-to-Speech, Interruption
+ * ═══════════════════════════════════════════════════════════════════════════
+ * LeoGPT — Premium AI Interface
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * INDEX (Kod Organizasyonu):
+ * ─────────────────────────────────────────────────────────────────────────
+ * 1. CONFIG & BACKEND     — getBackend, needsSetup, BACKEND, WS_URL
+ * 2. I18N & UI            — LANGUAGES, UI, getUILang, t, SUGGESTIONS, APPS
+ * 3. DOM ELEMENTS         — elements object
+ * 4. WEBSOCKET            — connect, handleMessage, sendChat, sendInterrupt
+ * 5. CHAT UI              — appendUser, appendAI, scrollChatToBottom, updateEmptyState
+ * 6. MARKDOWN & UTILS     — simpleMarkdown, escapeHtml
+ * 7. FEEDBACK             — sendFeedback
+ * 8. SPEECH               — initSpeechRecognition, speak, listen/stop
+ * 9. OVERLAYS & AUTH      — password, login, setup
+ * 10. PANELS              — search, applications, projects
+ * 11. EVENT BINDINGS      — click listeners, input handlers
+ * ─────────────────────────────────────────────────────────────────────────
+ *
+ * @author LeoHoca
+ * @version 2.0
  */
 
 (function () {
   'use strict';
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 1. CONFIG & BACKEND
+  // ─────────────────────────────────────────────────────────────────────────
 
   function getBackend() {
     if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
@@ -25,7 +48,11 @@
 
   const BACKEND = getBackend();
   const WS_URL = (BACKEND.startsWith('https') ? 'wss:' : 'ws:') + '//' + BACKEND.replace(/^https?:\/\//, '');
-  const LANGUAGES = { 'tr-TR': 'tr-TR', 'sq-AL': 'sq-AL' };
+  const LANGUAGES = { 'sq-AL': 'sq-AL' };
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 2. I18N & UI
+  // ─────────────────────────────────────────────────────────────────────────
 
   const UI = {
     'en': {
@@ -74,53 +101,6 @@
       emotionEnergetic: 'Energetic',
       emotionCalm: 'Calm'
     },
-    'tr-TR': {
-      statusConnecting: 'Bağlanıyor',
-      statusConnected: 'Bağlı',
-      statusReconnecting: 'Bağlantı koptu. Yeniden bağlanılıyor...',
-      statusError: 'Bağlantı hatası',
-      errorPrefix: 'Hata: ',
-      listening: 'Dinliyorum... Konuşun.',
-      hint: 'Herhangi bir dilde yaz — aynı dilde cevap veririm',
-      inputPlaceholder: 'Mesajını yaz...',
-      hintInput: 'Herhangi bir dilde yaz — aynı dilde cevap veririm',
-      emptyTitle: 'LeoGPT ile sohbet et',
-      emptyDesc: 'Mesajını yazıp Gönder\'e bas veya mikrofonla konuş',
-      typingText: 'LeoGPT yazıyor...',
-      tagline: 'Arkadaşın gibi burada',
-      newChat: 'Yeni sohbet',
-      searchChats: 'Sohbetleri ara',
-      searchPlaceholder: 'Mesajlarda ara...',
-      searchNoResults: 'Sonuç bulunamadı',
-      images: 'Görseller',
-      applications: 'Uygulamalar',
-      saveProject: 'Bu sohbeti kaydet',
-      projects: 'Projeler',
-      sendBtn: 'Gönder',
-      micBtn: 'Mikrofon',
-      wrongPassword: 'Yanlış şifre',
-      connectionError: 'Bağlantı hatası',
-      invalidUrl: 'Geçerli bir URL girin (https:// ile başlamalı)',
-      imgBtn: 'Resim ekle',
-      copyBtn: 'Kopyala',
-      copied: 'Kopyalandı!',
-      listen: 'Dinle',
-      speechNotSupported: 'Ses tanıma desteklenmiyor. Chrome kullanın.',
-      voiceSpeed: 'Ses hızı',
-      voiceType: 'Ses tipi',
-      voiceFemale: 'Kadın',
-      voiceMale: 'Erkek',
-      voiceAuto: 'Otomatik',
-      voiceSelect: 'Ses seç',
-      voicePitch: 'Ses tonu (pitch)',
-      voiceUsePro: 'Pro ses profili',
-      voiceEmotion: 'Ton / Duygu',
-      emotionFriendly: 'Samimi',
-      emotionProfessional: 'Ciddi',
-      emotionTeacher: 'Öğretici',
-      emotionEnergetic: 'Enerjik',
-      emotionCalm: 'Sakin'
-    },
     'sq-AL': {
       statusConnecting: 'Duke u lidhur',
       statusConnected: 'Lidhur',
@@ -128,13 +108,13 @@
       statusError: 'Gabim në lidhje',
       errorPrefix: 'Gabim: ',
       listening: 'Po dëgjoj... Fol.',
-      hint: 'Shkruani në çdo gjuhë — përgjigjem në të njëjtën gjuhë',
+      hint: 'Shkruani — përgjigjem në shqip',
       inputPlaceholder: 'Shkruani mesazhin tuaj...',
-      hintInput: 'Shkruani në çdo gjuhë — përgjigjem në të njëjtën gjuhë',
+      hintInput: 'Shkruani — përgjigjem në shqip',
       emptyTitle: 'Bisedoni me LeoGPT',
       emptyDesc: 'Shkruani më poshtë dhe shtypni Dërgo ose folni me mikrofon',
       typingText: 'LeoGPT po shkruan...',
-      tagline: 'Asistenti juaj AI profesional — 100% Shqip',
+      tagline: 'Asistenti juaj AI profesional — ',
       newChat: 'Bisedë e re',
       searchChats: 'Kërko bisedat',
       searchPlaceholder: 'Kërko në mesazhe...',
@@ -171,8 +151,6 @@
   };
 
   function getUILang() {
-    const stored = localStorage.getItem('leogpt_ui_lang');
-    if (stored === 'tr-TR' || stored === 'sq-AL') return stored;
     return 'sq-AL';
   }
 
@@ -186,18 +164,20 @@
     'Hello! How can you help me?',
     'Explain quantum computing simply',
     'Write a short poem',
+    'Krijo një imazh të një peizazhi',
+    'Si funksionon Projekt Generator?',
     'What can you do?'
   ];
 
   const APPS = [
-    { id: 'summarize', tr: 'Özetle', sq: 'Përmblidh', en: 'Summarize', prompt: { tr: 'Özetle: ', sq: 'Përmblidh: ', en: 'Summarize: ' } },
-    { id: 'translate', tr: 'Çevir', sq: 'Përkthe', en: 'Translate', prompt: { tr: 'Türkçeye çevir: ', sq: 'Përkthe në shqip: ', en: 'Translate to my language: ' } },
-    { id: 'explain', tr: 'Açıkla', sq: 'Shpjego', en: 'Explain', prompt: { tr: 'Açıkla: ', sq: 'Shpjego: ', en: 'Explain: ' } },
-    { id: 'expand', tr: 'Genişlet', sq: 'Zgjeroh', en: 'Expand', prompt: { tr: 'Genişlet: ', sq: 'Zgjeroh: ', en: 'Expand: ' } },
-    { id: 'simplify', tr: 'Basitleştir', sq: 'Thjeshteso', en: 'Simplify', prompt: { tr: 'Basitleştir: ', sq: 'Thjeshteso: ', en: 'Simplify: ' } }
+    { id: 'summarize', sq: 'Përmblidh', en: 'Summarize', prompt: { sq: 'Përmblidh: ', en: 'Summarize: ' } },
+    { id: 'translate', sq: 'Përkthe', en: 'Translate', prompt: { sq: 'Përkthe në shqip: ', en: 'Translate to my language: ' } },
+    { id: 'explain', sq: 'Shpjego', en: 'Explain', prompt: { sq: 'Shpjego: ', en: 'Explain: ' } },
+    { id: 'expand', sq: 'Zgjeroh', en: 'Expand', prompt: { sq: 'Zgjeroh: ', en: 'Expand: ' } },
+    { id: 'simplify', sq: 'Thjeshteso', en: 'Simplify', prompt: { sq: 'Thjeshteso: ', en: 'Simplify: ' } }
   ];
 
-  const CODEX_PROMPT = { tr: 'Şu konuda kod yaz: ', sq: 'Shkruaj kod për: ', en: 'Write code for: ' };
+  const CODEX_PROMPT = { sq: 'Shkruaj kod për: ', en: 'Write code for: ' };
 
   function updateEmptyState() {
     const hasTranscript = elements.transcript?.children?.length > 0;
@@ -254,7 +234,7 @@
 
   let ws = null;
   let sessionId = null;
-  let lastDetectedLang = 'en-US';
+  let lastDetectedLang = 'sq-AL';
   let recognition = null;
   let synthesis = window.speechSynthesis;
   synthesis.getVoices();
@@ -263,8 +243,14 @@
   let currentUtterance = null;
   let streamedContent = '';
   let userInterrupted = false;
+  let userHasInteracted = false;
   let autoSpeak = localStorage.getItem('leohoca_autospeak') === '1';
+  if (localStorage.getItem('leohoca_autospeak') === null) localStorage.setItem('leohoca_autospeak', '0');
   let voiceProConfig = null;
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 3. DOM ELEMENTS
+  // ─────────────────────────────────────────────────────────────────────────
 
   const elements = {
     status: document.getElementById('status'),
@@ -291,10 +277,16 @@
     imagesBtn: document.getElementById('imagesBtn'),
     applicationsBtn: document.getElementById('applicationsBtn'),
     codexBtn: document.getElementById('codexBtn'),
-    projectsBtn: document.getElementById('projectsBtn')
+    projectsBtn: document.getElementById('projectsBtn'),
+    projectGeneratorBtn: document.getElementById('projectGeneratorBtn'),
+    voiceModeOverlay: document.getElementById('voiceModeOverlay'),
+    voiceModeHint: document.getElementById('voiceModeHint'),
+    voiceModeLogo: document.getElementById('voiceModeLogo'),
+    voiceModeLogoFallback: document.getElementById('voiceModeLogoFallback')
   };
 
   function doSend() {
+    userHasInteracted = true;
     const text = elements.textInput?.value?.trim();
     if (text) {
       sendInterrupt();
@@ -309,6 +301,29 @@
     if (elements.status) elements.status.className = 'status ' + state;
     if (elements.statusText) elements.statusText.textContent = text;
   }
+
+  function updateVoiceModeOverlay() {
+    const overlay = elements.voiceModeOverlay;
+    const hint = elements.voiceModeHint;
+    if (!overlay) return;
+    const active = isListening || isSpeaking;
+    overlay.classList.toggle('active', active);
+    overlay.setAttribute('aria-hidden', !active);
+    if (hint) {
+      if (isListening) hint.textContent = t('listening');
+      else if (isSpeaking) hint.textContent = 'LeoGPT po flet...';
+      else hint.textContent = '';
+    }
+  }
+
+  elements.voiceModeOverlay?.addEventListener('click', () => {
+    if (isListening) recognition?.stop();
+    if (isSpeaking) stopSpeaking();
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 4. WEBSOCKET
+  // ─────────────────────────────────────────────────────────────────────────
 
   function connect() {
     ws = new WebSocket(WS_URL);
@@ -338,9 +353,10 @@
         sessionId = msg.sessionId;
         break;
       case 'greeting':
-        if (msg.greeting) {
+        if (msg.greeting && !sessionStorage.getItem('leohoca_greeting_shown')) {
+          sessionStorage.setItem('leohoca_greeting_shown', '1');
           appendAI(msg.greeting);
-          if (autoSpeak) speak(msg.greeting, 'en-US');
+          // Greeting sesli okunmaz — speechSynthesis user gesture gerektirir
         }
         break;
       case 'ai_start':
@@ -368,7 +384,16 @@
         const finalContent = streamedContent || msg.content || '';
         lastDetectedLang = msg.language || lastDetectedLang;
         appendAI(finalContent, 'msg-' + Date.now());
-        if (autoSpeak && !userInterrupted && finalContent) speak(finalContent, lastDetectedLang);
+        if (autoSpeak && userHasInteracted && !userInterrupted && finalContent) speak(finalContent, lastDetectedLang);
+        userInterrupted = false;
+        break;
+      case 'image_generated':
+        if (elements.typingIndicator) elements.typingIndicator.style.display = 'none';
+        if (elements.streamingMsg) elements.streamingMsg.style.display = 'none';
+        elements.streamingText.textContent = '';
+        elements.streamingText.classList.remove('active');
+        const dataUrl = 'data:' + (msg.mimeType || 'image/png') + ';base64,' + (msg.base64 || '');
+        appendAIImage(dataUrl, msg.caption || 'Ja imazhi i gjeneruar!', 'msg-' + Date.now());
         userInterrupted = false;
         break;
       case 'interrupt_ack':
@@ -426,6 +451,22 @@
     s = s.replace(/\*([^*]+)\*/g, '<em>$1</em>');
     s = s.replace(/\n/g, '<br>');
     return s;
+  }
+
+  function appendAIImage(imageDataUrl, caption, messageId) {
+    const div = document.createElement('div');
+    div.className = 'msg ai';
+    div.dataset.messageId = messageId || 'msg-' + Date.now();
+    const playTitle = t('listen');
+    const feedbackHtml = '<div class="feedback-btns"><button class="feedback-btn play-btn" title="' + playTitle + '" aria-label="' + playTitle + '">🔊</button><button class="feedback-btn" data-rating="1" title="👍">👍</button><button class="feedback-btn" data-rating="-1" title="👎">👎</button></div>';
+    div.innerHTML = '<div class="msg-avatar">L</div><div class="msg-body"><div class="msg-image"><img src="' + imageDataUrl + '" alt="Imazh i gjeneruar" /></div>' + (caption ? '<div class="msg-content">' + simpleMarkdown(caption) + '</div>' : '') + feedbackHtml + '</div>';
+    elements.transcript.appendChild(div);
+    div.querySelector('.play-btn')?.addEventListener('click', () => speak(caption || '', lastDetectedLang || 'sq-AL'));
+    div.querySelectorAll('.feedback-btn[data-rating]').forEach(btn => {
+      btn.addEventListener('click', () => sendFeedback(div.dataset.messageId, parseInt(btn.dataset.rating), btn, div));
+    });
+    scrollChatToBottom();
+    updateEmptyState();
   }
 
   function appendAI(text, messageId) {
@@ -487,13 +528,14 @@
     recognition = new SpeechRecognition();
     recognition.continuous = true;
     recognition.interimResults = true;
-    recognition.lang = speechFallbackLang || (navigator.language || 'en-US');
+    recognition.lang = speechFallbackLang || 'sq-AL';
 
     recognition.onstart = () => {
       isListening = true;
       elements.micBtn.classList.add('listening');
       elements.visualizer.classList.add('listening');
       elements.hint.textContent = t('listening');
+      updateVoiceModeOverlay();
     };
 
     recognition.onend = () => {
@@ -501,6 +543,7 @@
       elements.micBtn.classList.remove('listening');
       elements.visualizer.classList.remove('listening');
       elements.hint.textContent = t('hint');
+      updateVoiceModeOverlay();
     };
 
     recognition.onresult = (e) => {
@@ -544,7 +587,7 @@
     if (isListening) {
       recognition.stop();
     } else {
-      recognition.lang = speechFallbackLang || (navigator.language || 'en-US');
+      recognition.lang = speechFallbackLang || 'sq-AL';
       recognition.start();
     }
   }
@@ -554,11 +597,12 @@
       synthesis.cancel();
       isSpeaking = false;
       currentUtterance = null;
+      updateVoiceModeOverlay();
     }
   }
 
-  const FEMALE_VOICE_NAMES = /samantha|karen|moira|fiona|victoria|emma|melina|milena|yelda|zira|aylin|filiz|zeina|amazon|female|woman|kadın|kadin|femëror|google.*female|female.*english|susan|anna|helen|kate|sarah|lucy|emily|sabina|maria|elena/i;
-  const MALE_VOICE_NAMES = /alex|daniel|david|tom|mark|ralph|fred|paul|george|microsoft\s*david|male|man|erkek|mashkull|google.*male|male.*english|james|nick|harry|oliver|peter|steve|william|adam|brian/i;
+  const FEMALE_VOICE_NAMES = /samantha|karen|moira|fiona|victoria|emma|melina|milena|yelda|zira|aylin|filiz|zeina|amazon|female|woman|femëror|google.*female|female.*english|susan|anna|helen|kate|sarah|lucy|emily|sabina|maria|elena/i;
+  const MALE_VOICE_NAMES = /alex|daniel|david|tom|mark|ralph|fred|paul|george|microsoft\s*david|male|man|mashkull|google.*male|male.*english|james|nick|harry|oliver|peter|steve|william|adam|brian/i;
 
   function voiceGender(n) {
     const name = (n || '').toLowerCase();
@@ -653,15 +697,16 @@
     if (!voice) voice = getVoiceForLang(useLang);
     if (voice) utterance.voice = voice;
 
-    utterance.onstart = () => { isSpeaking = true; };
-    utterance.onend = () => { isSpeaking = false; };
-    utterance.onerror = () => { isSpeaking = false; };
+    utterance.onstart = () => { isSpeaking = true; updateVoiceModeOverlay(); };
+    utterance.onend = () => { isSpeaking = false; updateVoiceModeOverlay(); };
+    utterance.onerror = () => { isSpeaking = false; updateVoiceModeOverlay(); };
 
     currentUtterance = utterance;
     synthesis.speak(utterance);
   }
 
   elements.micBtn.addEventListener('click', () => {
+    userHasInteracted = true;
     if (isListening) {
       sendInterrupt();
       stopSpeaking();
@@ -785,6 +830,7 @@
   });
 
   elements.sendBtn?.addEventListener('click', doSend);
+  elements.textInput?.addEventListener('focus', () => { userHasInteracted = true; });
   elements.textInput?.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -828,6 +874,7 @@
   }
 
   function showMainApp() {
+    hidePwaSplash();
     authOverlay?.style && (authOverlay.style.display = 'none');
     passwordOverlay.style.display = 'none';
     loginOverlay.style.display = 'none';
@@ -852,8 +899,14 @@
     });
   });
 
+  function hidePwaSplash() {
+    const s = document.getElementById('pwaSplash');
+    if (s) { s.style.display = 'none'; s.setAttribute('aria-hidden', 'true'); }
+  }
+
   function initApp() {
     if (needsSetup()) {
+      hidePwaSplash();
       authOverlay?.style && (authOverlay.style.display = 'none');
       setupOverlay.style.display = 'flex';
       saveBtn?.addEventListener('click', () => {
@@ -875,9 +928,14 @@
         img.src = logoUrl.startsWith('http') ? logoUrl : BACKEND + logoUrl;
       }
       if (img) img.onerror = () => { img.style.display = 'none'; if (fallback) fallback.style.display = 'flex'; };
+      const vLogo = document.getElementById('voiceModeLogo');
+      const vFallback = document.getElementById('voiceModeLogoFallback');
+      if (logoUrl && vLogo) vLogo.src = logoUrl.startsWith('http') ? logoUrl : BACKEND + logoUrl;
+      if (vLogo) vLogo.onerror = () => { vLogo.style.display = 'none'; if (vFallback) vFallback.style.display = 'flex'; };
     });
     fetch(BACKEND + '/api/auth/required').then(r => r.json()).then(d => {
       if (d.required) {
+        hidePwaSplash();
         authOverlay?.style && (authOverlay.style.display = 'none');
         loginOverlay.style.display = 'none';
         passwordOverlay.style.display = 'flex';
@@ -915,6 +973,7 @@
         const features = config.features || {};
         const token = localStorage.getItem('leogpt_token');
         if (features.requireLogin && !token) {
+          hidePwaSplash();
           authOverlay?.style && (authOverlay.style.display = 'none');
           passwordOverlay.style.display = 'none';
           loginOverlay.style.display = 'flex';
@@ -1086,9 +1145,9 @@
     APPS.forEach(app => {
       const btn = document.createElement('button');
       btn.className = 'app-btn';
-      btn.textContent = app[uiLang === 'sq-AL' ? 'sq' : (uiLang === 'tr-TR' ? 'tr' : 'en')] || app.tr;
+      btn.textContent = app[uiLang === 'sq-AL' ? 'sq' : 'en'] || app.sq;
       btn.addEventListener('click', () => {
-        const prompt = app.prompt[uiLang === 'sq-AL' ? 'sq' : (uiLang === 'tr-TR' ? 'tr' : 'en')] || app.prompt.tr;
+        const prompt = app.prompt[uiLang === 'sq-AL' ? 'sq' : 'en'] || app.prompt.sq;
         elements.textInput.value = prompt + (elements.textInput.value || '');
         elements.textInput.focus();
         applicationsOverlay?.classList.remove('visible');
@@ -1104,7 +1163,7 @@
   /* Codex - insert code prompt */
   elements.codexBtn?.addEventListener('click', () => {
     closeSidebar();
-    const prompt = CODEX_PROMPT[uiLang === 'sq-AL' ? 'sq' : (uiLang === 'tr-TR' ? 'tr' : 'en')] || CODEX_PROMPT.en;
+    const prompt = CODEX_PROMPT[uiLang === 'sq-AL' ? 'sq' : 'en'] || CODEX_PROMPT.en;
     elements.textInput.value = prompt + (elements.textInput.value || '');
     elements.textInput.focus();
   });
@@ -1156,13 +1215,13 @@
     projectsList.innerHTML = '';
     const projects = getProjects();
     if (projects.length === 0) {
-      projectsList.innerHTML = '<p class="projects-empty">' + (uiLang === 'sq-AL' ? 'Nuk ka projekte' : (uiLang === 'tr-TR' ? 'Proje yok' : 'No projects')) + '</p>';
+      projectsList.innerHTML = '<p class="projects-empty">' + (uiLang === 'sq-AL' ? 'Nuk ka projekte' : 'No projects') + '</p>';
       return;
     }
     projects.reverse().forEach((proj) => {
       const div = document.createElement('div');
       div.className = 'project-item';
-      const openLabel = uiLang === 'sq-AL' ? 'Hap' : (uiLang === 'tr-TR' ? 'Aç' : 'Open');
+      const openLabel = uiLang === 'sq-AL' ? 'Hap' : 'Open';
       div.innerHTML = '<span class="project-title">' + escapeHtml(proj.title || 'Chat') + '</span><div class="project-actions"><button class="project-load" data-id="' + proj.id + '">' + openLabel + '</button><button class="project-delete" data-id="' + proj.id + '">×</button></div>';
       div.querySelector('.project-load')?.addEventListener('click', () => {
         const p = getProjects().find(x => x.id === proj.id);
@@ -1200,6 +1259,72 @@
   elements.projectsBtn?.addEventListener('click', openProjects);
   projectsClose?.addEventListener('click', () => projectsOverlay?.classList.remove('visible'));
   projectsOverlay?.addEventListener('click', (e) => { if (e.target === projectsOverlay) projectsOverlay.classList.remove('visible'); });
+
+  /* AI Project Generator */
+  const projectGeneratorOverlay = document.getElementById('projectGeneratorOverlay');
+  const projectGeneratorClose = document.getElementById('projectGeneratorClose');
+  const projectGenForm = document.getElementById('projectGenForm');
+  const projectPdfInput = document.getElementById('projectPdfInput');
+  const projectPdfFilename = document.getElementById('projectPdfFilename');
+  const projectGenStatus = document.getElementById('projectGenStatus');
+  const projectGenDownload = document.getElementById('projectGenDownload');
+  const projectGenDownloadLink = document.getElementById('projectGenDownloadLink');
+  const projectGenSubmit = document.getElementById('projectGenSubmit');
+
+  function openProjectGenerator() {
+    closeSidebar();
+    projectGeneratorOverlay?.classList.add('visible');
+    projectGenStatus.textContent = '';
+    projectGenDownload.style.display = 'none';
+  }
+
+  projectPdfInput?.addEventListener('change', () => {
+    const f = projectPdfInput.files?.[0];
+    projectPdfFilename.textContent = f ? f.name : '';
+  });
+
+  projectGenForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const file = projectPdfInput.files?.[0];
+    if (!file || file.type !== 'application/pdf') {
+      projectGenStatus.textContent = 'Zgjidhni një skedar PDF.';
+      projectGenStatus.className = 'project-gen-status error';
+      return;
+    }
+    projectGenSubmit.disabled = true;
+    projectGenStatus.textContent = 'Po analizohet PDF... Po gjenerohet projekti...';
+    projectGenStatus.className = 'project-gen-status loading';
+    projectGenDownload.style.display = 'none';
+
+    const formData = new FormData();
+    formData.append('pdf', file);
+
+    try {
+      const res = await fetch(BACKEND + '/api/project/upload', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      if (data.ok && data.downloadUrl) {
+        projectGenStatus.textContent = 'Projekti u gjenerua! Shkarkoni ZIP.';
+        projectGenStatus.className = 'project-gen-status success';
+        projectGenDownloadLink.href = BACKEND + data.downloadUrl;
+        projectGenDownloadLink.download = data.zipName || 'project.zip';
+        projectGenDownload.style.display = 'block';
+      } else {
+        projectGenStatus.textContent = data.error || 'Gabim gjenerimi.';
+        projectGenStatus.className = 'project-gen-status error';
+      }
+    } catch (err) {
+      projectGenStatus.textContent = err.message || 'Gabim lidhje.';
+      projectGenStatus.className = 'project-gen-status error';
+    }
+    projectGenSubmit.disabled = false;
+  });
+
+  elements.projectGeneratorBtn?.addEventListener('click', openProjectGenerator);
+  projectGeneratorClose?.addEventListener('click', () => projectGeneratorOverlay?.classList.remove('visible'));
+  projectGeneratorOverlay?.addEventListener('click', (e) => { if (e.target === projectGeneratorOverlay) projectGeneratorOverlay.classList.remove('visible'); });
 
   /* Theme toggle */
   const savedTheme = localStorage.getItem('leohoca_theme') || 'light';

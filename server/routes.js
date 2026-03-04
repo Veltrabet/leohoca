@@ -7,18 +7,35 @@ const router = express.Router();
 const db = require('./db');
 const auth = require('./auth');
 const settings = require('./settings');
+const imagegen = require('./imagegen');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
 const uploadDir = path.join(__dirname, '..', 'client', 'uploads');
+const projectgen = require('./projectgen');
+const projectsTempDir = path.join(__dirname, '..', 'projects', 'temp');
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+if (!fs.existsSync(projectsTempDir)) fs.mkdirSync(projectsTempDir, { recursive: true });
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadDir),
   filename: (req, file, cb) => cb(null, Date.now() + '-' + (file.originalname || 'img').replace(/[^a-zA-Z0-9.-]/g, '_'))
 });
 const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } }); // 5MB
+
+const pdfStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, projectsTempDir),
+  filename: (req, file, cb) => cb(null, Date.now() + '-' + (file.originalname || 'doc').replace(/[^a-zA-Z0-9.-]/g, '_'))
+});
+const uploadPdf = multer({
+  storage: pdfStorage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === 'application/pdf') cb(null, true);
+    else cb(new Error('Vetëm PDF lejohet'));
+  }
+});
 
 // --- Auth ---
 router.post('/auth/register', (req, res) => {
@@ -29,7 +46,7 @@ router.post('/auth/register', (req, res) => {
     else res.status(400).json(result);
   } catch (e) {
     console.error('Register error:', e);
-    res.status(500).json({ ok: false, error: e.message || 'Sunucu hatası' });
+    res.status(500).json({ ok: false, error: e.message || 'Gabim serveri' });
   }
 });
 
@@ -41,7 +58,7 @@ router.post('/auth/login', (req, res) => {
     else res.status(401).json(result);
   } catch (e) {
     console.error('Login error:', e);
-    res.status(500).json({ ok: false, error: e.message || 'Sunucu hatası' });
+    res.status(500).json({ ok: false, error: e.message || 'Gabim serveri' });
   }
 });
 
@@ -50,7 +67,7 @@ router.get('/auth/me', auth.requireAuth, (req, res) => {
   else res.status(401).json({ ok: false });
 });
 
-// Uygulama şifresi (LEOHOCA_PASSWORD) - /api/auth ve /api/auth/required
+// Fjalëkalimi i aplikacionit (LEOHOCA_PASSWORD) - /api/auth dhe /api/auth/required
 router.post('/auth', (req, res) => {
   const pwd = process.env.LEOHOCA_PASSWORD;
   if (!pwd || !pwd.trim()) return res.json({ ok: true });
@@ -69,7 +86,7 @@ router.post('/feedback', (req, res) => {
   const sessionId = req.body.sessionId || '';
 
   if (!rating || (rating !== 1 && rating !== -1)) {
-    return res.status(400).json({ ok: false, error: 'Geçersiz rating (1 veya -1)' });
+    return res.status(400).json({ ok: false, error: 'Rating i pavlefshëm (1 ose -1)' });
   }
 
   try {
@@ -81,7 +98,7 @@ router.post('/feedback', (req, res) => {
   }
 });
 
-// --- Public config (özellik bayrakları) ---
+// --- Konfigurim publik (flamujt e veçorive) ---
 router.get('/config/public', (req, res) => {
   const s = settings.getSettings();
   const content = settings.getAppContent();
@@ -93,7 +110,7 @@ router.get('/config/public', (req, res) => {
   });
 });
 
-// --- Admin (tüm /admin/* auth gerektirir) ---
+// --- Admin (të gjitha /admin/* kërkojnë auth) ---
 router.get('/admin/check', auth.requireAuth, (req, res) => {
   if (req.user?.is_admin) res.json({ ok: true, admin: true });
   else res.status(403).json({ ok: false, admin: false });
@@ -112,7 +129,7 @@ router.get('/admin/allowed-emails', auth.requireAuth, auth.requireAdmin, (req, r
 router.post('/admin/allowed-emails', auth.requireAuth, auth.requireAdmin, (req, res) => {
   const { email } = req.body || {};
   const em = (email || '').trim().toLowerCase();
-  if (!em || !em.includes('@')) return res.status(400).json({ ok: false, error: 'Geçerli email girin' });
+  if (!em || !em.includes('@')) return res.status(400).json({ ok: false, error: 'Vendosni një email të vlefshëm' });
   try {
     db.prepare('INSERT INTO allowed_emails (email) VALUES (?)').run(em);
     res.json({ ok: true });
@@ -178,13 +195,13 @@ router.post('/admin/upload', auth.requireAuth, auth.requireAdmin, upload.single(
   res.json({ ok: true, url });
 });
 
-// --- Instagram (admin: hesap ekleme, public: stats için API) ---
+// --- Instagram (admin: shtim llogarie, publik: API për stats) ---
 const ig = require('./instagram');
 
 router.get('/instagram/connect', auth.requireAuth, auth.requireAdmin, (req, res) => {
-  if (!ig.isConfigured()) return res.status(503).json({ ok: false, error: 'Instagram API yapılandırılmamış. META_APP_ID, META_APP_SECRET, INSTAGRAM_REDIRECT_URI ekleyin.' });
+  if (!ig.isConfigured()) return res.status(503).json({ ok: false, error: 'Instagram API nuk është konfiguruar. Shtoni META_APP_ID, META_APP_SECRET, INSTAGRAM_REDIRECT_URI.' });
   const url = ig.getConnectUrl();
-  if (!url) return res.status(503).json({ ok: false, error: 'OAuth URL oluşturulamadı' });
+  if (!url) return res.status(503).json({ ok: false, error: 'URL e OAuth nuk u krijua' });
   res.json({ ok: true, url });
 });
 
@@ -226,7 +243,7 @@ router.post('/admin/instagram/add-token', auth.requireAuth, auth.requireAdmin, a
   const { token: accessToken } = req.body;
   if (!accessToken || typeof accessToken !== 'string') return res.status(400).json({ ok: false, error: 'Token gerekli' });
   const cleanToken = String(accessToken).trim().replace(/\s+/g, '');
-  if (!cleanToken || cleanToken.length < 50) return res.status(400).json({ ok: false, error: 'Token çok kısa veya geçersiz' });
+  if (!cleanToken || cleanToken.length < 50) return res.status(400).json({ ok: false, error: 'Tokeni shumë i shkurtër ose i pavlefshëm' });
   try {
     const longToken = await ig.getLongLivedToken(cleanToken).catch(() => cleanToken);
     const userInfo = await ig.getIgUserInfo(longToken);
@@ -237,7 +254,7 @@ router.post('/admin/instagram/add-token', auth.requireAuth, auth.requireAdmin, a
     res.json({ ok: true, username: userInfo.username });
   } catch (e) {
     console.error('Instagram add-token:', e);
-    res.status(400).json({ ok: false, error: e.message || 'Token geçersiz' });
+    res.status(400).json({ ok: false, error: e.message || 'Tokeni i pavlefshëm' });
   }
 });
 
@@ -246,14 +263,14 @@ router.get('/instagram/stats/:username', (req, res) => {
   const norm = (u) => (u || '').toLowerCase().replace(/_/g, '');
   const rows = db.prepare('SELECT username, instagram_user_id, access_token FROM instagram_accounts').all();
   const row = rows.find(r => r.username.toLowerCase() === username.toLowerCase() || norm(r.username) === norm(username) || norm(r.username).startsWith(norm(username)));
-  if (!row) return res.status(404).json({ ok: false, error: 'Hesap bulunamadı. Admin panelden ekleyin.' });
+  if (!row) return res.status(404).json({ ok: false, error: 'Llogaria nuk u gjet. Shtoni nga paneli admin.' });
   const token = ig.decryptToken(row.access_token);
   ig.fetchAccountStats(token, row.instagram_user_id)
     .then(stats => {
       db.prepare('UPDATE instagram_accounts SET last_sync_at = CURRENT_TIMESTAMP WHERE instagram_user_id = ?').run(row.instagram_user_id);
       res.json({ ok: true, username, stats });
     })
-    .catch(e => res.status(500).json({ ok: false, error: e.message || 'İstatistik alınamadı' }));
+    .catch(e => res.status(500).json({ ok: false, error: e.message || 'Statistikat nuk u morën' }));
 });
 
 router.get('/instagram/configured', (req, res) => {
@@ -266,6 +283,52 @@ router.get('/instagram/debug', (req, res) => {
     configured: ig.isConfigured(),
     appIdPrefix: id ? id.slice(0, 4) + '...' + id.slice(-4) : null,
     redirectUri: process.env.INSTAGRAM_REDIRECT_URI || ''
+  });
+});
+
+// --- Image Generation (Stable Diffusion / Fooocus) ---
+router.post('/image/generate', (req, res) => {
+  const { prompt, negative_prompt, width, height } = req.body || {};
+  if (!prompt || typeof prompt !== 'string' || !prompt.trim()) {
+    return res.status(400).json({ ok: false, error: 'Prompt kërkohet' });
+  }
+  if (!imagegen.isConfigured()) {
+    return res.status(503).json({ ok: false, error: 'IMAGE_GEN_URL nuk është konfiguruar. Shtoni në .env: IMAGE_GEN_URL=http://localhost:7860' });
+  }
+  imagegen.generateImage(prompt.trim(), { negative_prompt, width, height })
+    .then((result) => res.json({ ok: true, image: result.base64, mimeType: result.mimeType }))
+    .catch((e) => res.status(500).json({ ok: false, error: e.message || 'Gjenerimi i imazhit dështoi' }));
+});
+
+router.get('/image/configured', (req, res) => {
+  res.json({ configured: imagegen.isConfigured() });
+});
+
+// --- AI Project Generator (PDF → Proje → ZIP) ---
+router.post('/project/upload', uploadPdf.single('pdf'), async (req, res) => {
+  if (!req.file || !req.file.path) {
+    return res.status(400).json({ ok: false, error: 'Ngarko një PDF' });
+  }
+  try {
+    const { zipPath, zipName, projectName } = await projectgen.processPdf(req.file.path);
+    projectgen.cleanupOldProjects();
+    try { fs.unlinkSync(req.file.path); } catch (_) {}
+    res.json({ ok: true, zipName, projectName, downloadUrl: '/api/project/download/' + encodeURIComponent(zipName) });
+  } catch (e) {
+    try { if (req.file?.path) fs.unlinkSync(req.file.path); } catch (_) {}
+    console.error('[Project]', e.message);
+    res.status(500).json({ ok: false, error: e.message || 'Gjenerimi dështoi' });
+  }
+});
+
+router.get('/project/download/:zipName', (req, res) => {
+  const zipName = (req.params.zipName || '').replace(/[^a-zA-Z0-9._-]/g, '');
+  if (!zipName) return res.status(400).send('Emër i pavlefshëm');
+  const zipPath = path.join(projectgen.PROJECTS_DIR, zipName);
+  if (!fs.existsSync(zipPath)) return res.status(404).send('Skedari nuk u gjet');
+  res.download(zipPath, zipName, (err) => {
+    if (err && !res.headersSent) res.status(500).send('Gabim shkarkimi');
+    try { fs.unlinkSync(zipPath); } catch (_) {}
   });
 });
 

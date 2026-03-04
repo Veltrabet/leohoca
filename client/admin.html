@@ -85,7 +85,7 @@
               <div class="api-step"><code>META_APP_ID</code> — Nga developers.facebook.com → Settings → Basic</div>
               <div class="api-step"><code>META_APP_SECRET</code> — I njëjti vend</div>
               <div class="api-step"><code>INSTAGRAM_REDIRECT_URI</code> — https://domain-i-yte/api/instagram/callback</div>
-              <p class="small text-muted mt-2">Detaj: <code>INSTAGRAM-NASIL-EKLENIR.md</code> ose <code>INSTAGRAM-BASIT-REHBER.md</code></p>
+              <p class="small text-muted mt-2">Detaj: <code>INSTAGRAM-ADIM-ADIM.md</code></p>
             </div>
             <div id="igConfigMsg" class="alert alert-warning d-none mb-3"></div>
             <div class="d-flex flex-wrap gap-2 mb-3">
@@ -247,7 +247,7 @@
       if (err) {
         let msg = 'Gabim Instagram: ' + err;
         if (err === 'code_yok') {
-          msg += '\n\nKontrollo:\n1. Meta → Set up Instagram business login → OAuth redirect URIs: https://leohoca.up.railway.app/api/instagram/callback\n2. Meta → Add account → Instagram hesabını "Instagram Tester" olarak ekle\n3. Instagram sayfasında "İzin ver" butonuna tıkla';
+          msg += '\n\nKontrollo:\n1. Meta → Set up Instagram business login → OAuth redirect URIs: https://leohoca.up.railway.app/api/instagram/callback\n2. Meta → Add account → Shto llogarinë Instagram si "Instagram Tester"\n3. Kliko butonin "Lejo" në faqen e Instagramit';
         }
         alert(msg);
         history.replaceState({}, '', location.pathname);
@@ -261,7 +261,7 @@
       const btn = document.getElementById('igConnectBtn');
       if (!cfg.configured) {
         msgEl.classList.remove('d-none');
-        msgEl.textContent = 'Shtoni META_APP_ID, META_APP_SECRET, INSTAGRAM_REDIRECT_URI në server/.env. Shiko INSTAGRAM-NASIL-EKLENIR.md';
+        msgEl.textContent = 'Shtoni META_APP_ID, META_APP_SECRET, INSTAGRAM_REDIRECT_URI në server/.env. Shiko INSTAGRAM-ADIM-ADIM.md';
         btn.disabled = true;
         return;
       }

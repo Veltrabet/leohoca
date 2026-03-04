@@ -1,11 +1,11 @@
 /**
- * LeoGPT - Uygulama ayarları (admin panelinden yönetilir)
+ * LeoGPT - Cilësimet e aplikacionit (menaxhohen nga paneli admin)
  */
 
 const db = require('./db');
 
 const CACHE = {};
-const CACHE_TTL = 60000; // 1 dakika
+const CACHE_TTL = 60000; // 1 minutë
 let lastFetch = 0;
 
 function getSettings() {

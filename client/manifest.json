@@ -1,7 +1,7 @@
 {
-  "name": "LeoGPT - AI Asistan",
-  "short_name": "LeoGPT",
-  "description": "© Leohoca. Asistent AI profesional — 100% Shqip.",
+  "name": "LEOGPT",
+  "short_name": "LEOGPT",
+  "description": "© Leohoca. Asistent AI profesional — .",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#f8fafc",

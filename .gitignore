@@ -3,6 +3,7 @@ node_modules/
 server/.env
 server/data/
 client/uploads/
+projects/
 *.log
 .DS_Store
 .env.local

@@ -11,7 +11,7 @@ const path = require('path');
 const os = require('os');
 const { v4: uuidv4 } = require('uuid');
 
-// CORS - Hostinger'dan gelen istekler için (frontend farklı domainde)
+// CORS - për kërkesat nga frontend (domain i ndryshëm)
 const cors = (req, res, next) => {
   const origin = req.headers.origin;
   res.setHeader('Access-Control-Allow-Origin', origin || '*');
@@ -34,6 +34,7 @@ const ai = require('./ai');
 const { getDetectedLanguage, setPreferredLanguage, getPreferredLanguage } = require('./memory');
 const db = require('./db');
 const ig = require('./instagram');
+const imagegen = require('./imagegen');
 
 const app = express();
 const server = http.createServer(app);
@@ -49,7 +50,7 @@ app.use(express.json());
 const routes = require('./routes');
 app.use('/api', routes);
 
-// Serve static client files (client klasörü server'ın bir üst dizininde)
+// Shërbej skedarët statikë të klientit (client në një nivel më lart se server)
 const clientPath = path.join(__dirname, '..', 'client');
 app.use((req, res, next) => {
   if (req.path === '/' || req.path.endsWith('.html')) {
@@ -61,7 +62,7 @@ app.use((req, res, next) => {
 });
 app.use(express.static(clientPath));
 
-// Logo ve statik dosyalar (deploy uyumluluğu)
+// Logo dhe skedarë statikë (përputhshmëri deploy)
 app.get('/logo.png', (req, res) => {
   res.sendFile(path.join(clientPath, 'logo.png'));
 });
@@ -82,7 +83,7 @@ app.get('/api/config', (req, res) => {
     persona,
     voice,
     voicePro,
-    greeting: ai.getGreeting('tr-TR')
+    greeting: ai.getGreeting('sq-AL')
   });
 });
 
@@ -100,11 +101,11 @@ app.get('/api/network', (req, res) => {
 
 // API: Get greeting for language
 app.get('/api/greeting/:lang', (req, res) => {
-  const lang = req.params.lang === 'sq-AL' ? 'sq-AL' : 'tr-TR';
+  const lang = 'sq-AL';
   res.json({ greeting: ai.getGreeting(lang) });
 });
 
-// SPA fallback - sadece tanınmayan path'ler için
+// SPA fallback - vetëm për path të panjohur
 app.get('*', (req, res) => {
   res.sendFile(path.join(clientPath, 'index.html'));
 });
@@ -139,9 +140,30 @@ wss.on('connection', (ws, req) => {
 
           ws.send(JSON.stringify({ type: 'ai_start' }));
 
+          // Image generation intent (only when text, not when user sends image)
+          const hasImageIntent = !image && text && /(krijo|bëj|gjenero).*(imazh|foto|vizatim)|(imazh|foto|vizatim).*(krijo|bëj|gjenero)|create\s+image|generate\s+image|\bdraw\b|resim\s+yap|fotoğraf\s+oluştur|görsel\s+oluştur/i.test(text);
+          if (hasImageIntent && imagegen.isConfigured()) {
+            try {
+              const result = await imagegen.generateImage(text, {});
+              if (ws.readyState === 1) {
+                ws.send(JSON.stringify({
+                  type: 'image_generated',
+                  base64: result.base64,
+                  mimeType: result.mimeType || 'image/png',
+                  prompt: text,
+                  caption: 'Ja imazhi i gjeneruar!'
+                }));
+              }
+              break;
+            } catch (e) {
+              console.error('[Image gen]', e.message);
+              // fall through to AI for explanation
+            }
+          }
+
           let instagramContext = [];
           const t = (text || '').toLowerCase();
-          const hasIgIntent = /\b(istatistik|statistik|statistikat|instagram|meta|business|hesap|nasıl gidiyor|si po shkon|özet|përmbledhje|performans|takipçi|ndjekës|follower|reklam|hata|bildirim|reach|erişim|arritje|görüntülenme|pamje|kontroll|kontrolloj|prestigex)\b/i.test(t);
+          const hasIgIntent = /\b(istatistik|statistik|statistikat|instagram|meta|business|llogari|si po shkon|përmbledhje|performans|ndjekës|follower|reklamë|gabim|njoftim|reach|arritje|pamje|kontroll|prestigex)\b/i.test(t);
           if (hasIgIntent) {
             const mentions = (t.match(/@([a-zA-Z0-9_.]+)/g) || []).map(m => m.slice(1));
             const accounts = db.prepare('SELECT username, instagram_user_id, access_token FROM instagram_accounts').all();
@@ -223,11 +245,11 @@ wss.on('close', () => clearInterval(interval));
 server.listen(PORT, '0.0.0.0', () => {
   const ip = getLocalIP();
   console.log(`\n🦁 LeoHoca server running`);
-  console.log(`   Bilgisayar: http://localhost:${PORT}`);
+  console.log(`   Kompjuter: http://localhost:${PORT}`);
   if (ip) {
     console.log(`   Telefon:   http://${ip}:${PORT}`);
-    console.log(`   (Telefon ve bilgisayar aynı WiFi'de olmalı)\n`);
+    console.log(`   (Telefoni dhe kompjuteri duhet të jenë në të njëjtën WiFi)\n`);
   } else {
-    console.log('   Voice AI assistant ready for Turkish & Albanian\n');
+    console.log('   Asistenti AI me zë gati për Shqip\n');
   }
 });

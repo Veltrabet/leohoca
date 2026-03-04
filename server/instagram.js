@@ -32,7 +32,7 @@ async function exchangeCodeForToken(code) {
     })
   });
   const raw = await res.json();
-  if (raw.error) throw new Error(raw.error_message || raw.error?.message || raw.error || 'Token alınamadı');
+  if (raw.error) throw new Error(raw.error_message || raw.error?.message || raw.error || 'Tokeni nuk u mor');
   const data = raw.data?.[0] || raw;
   if (!data.access_token) throw new Error('access_token nuk u kthye nga Meta');
   return data;
@@ -42,7 +42,7 @@ async function getLongLivedToken(shortToken) {
   const clean = String(shortToken || '').trim().replace(/\s+/g, '');
   const res = await fetch(`https://graph.instagram.com/access_token?grant_type=ig_exchange_token&client_secret=${encodeURIComponent(META_APP_SECRET)}&access_token=${encodeURIComponent(clean)}`);
   const data = await res.json();
-  if (data.error) throw new Error(data.error?.message || 'Long-lived token alınamadı');
+  if (data.error) throw new Error(data.error?.message || 'Tokeni afatgjatë nuk u mor');
   return data.access_token;
 }
 
@@ -50,7 +50,7 @@ async function getIgUserInfo(accessToken) {
   const clean = String(accessToken || '').trim().replace(/\s+/g, '');
   const res = await fetch(`https://graph.instagram.com/me?fields=id,username&access_token=${encodeURIComponent(clean)}`);
   const data = await res.json();
-  if (data.error) throw new Error(data.error?.message || 'Kullanıcı bilgisi alınamadı');
+  if (data.error) throw new Error(data.error?.message || 'Informacioni i përdoruesit nuk u mor');
   return data;
 }
 
@@ -94,7 +94,7 @@ async function fetchAccountStats(accessToken, igUserId) {
   const fields = 'followers_count,media_count';
   const res = await fetch(`https://graph.instagram.com/${igUserId}?fields=${fields}&access_token=${encodeURIComponent(clean)}`);
   const basic = await res.json();
-  if (basic.error) throw new Error(basic.error?.message || 'İstatistik alınamadı');
+  if (basic.error) throw new Error(basic.error?.message || 'Statistikat nuk u morën');
 
   const followers = basic.followers_count ?? 0;
   const mediaCount = basic.media_count ?? 0;

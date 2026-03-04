@@ -1,5 +1,5 @@
 /**
- * LeoGPT - Kimlik doğrulama
+ * LeoGPT - Autentifikim
  */
 
 const db = require('./db');
@@ -18,13 +18,13 @@ function isEmailAllowed(email) {
 }
 
 function register(email, password, name) {
-  if (!email || !password) return { ok: false, error: 'Email ve şifre gerekli' };
-  if (password.length < 6) return { ok: false, error: 'Şifre en az 6 karakter olmalı' };
+  if (!email || !password) return { ok: false, error: 'Email dhe fjalëkalimi janë të nevojshëm' };
+  if (password.length < 6) return { ok: false, error: 'Fjalëkalimi duhet të ketë të paktën 6 karaktere' };
 
   const em = email.toLowerCase().trim();
   const flags = settings.getFeatureFlags();
   if (flags.inviteOnly && !isEmailAllowed(em)) {
-    return { ok: false, error: 'Bu email izin listesinde değil. Admin\'den davet isteyin.' };
+    return { ok: false, error: 'Ky email nuk është në listën e lejuar. Kërko ftesë nga admin.' };
   }
 
   const hash = bcrypt.hashSync(password, 10);
@@ -36,18 +36,18 @@ function register(email, password, name) {
     const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: JWT_EXPIRY });
     return { ok: true, token, user: { id: user.id, email: user.email, name: user.name, is_admin: !!user.is_admin } };
   } catch (e) {
-    if (e.message.includes('UNIQUE')) return { ok: false, error: 'Bu email zaten kayıtlı' };
+    if (e.message.includes('UNIQUE')) return { ok: false, error: 'Ky email është tashmë i regjistruar' };
     throw e;
   }
 }
 
 function login(email, password) {
-  if (!email || !password) return { ok: false, error: 'Email ve şifre gerekli' };
+  if (!email || !password) return { ok: false, error: 'Email dhe fjalëkalimi janë të nevojshëm' };
 
   const user = db.prepare('SELECT id, email, password_hash, name, is_admin FROM users WHERE email = ?')
     .get(email.toLowerCase().trim());
-  if (!user) return { ok: false, error: 'Email veya şifre hatalı' };
-  if (!bcrypt.compareSync(password, user.password_hash)) return { ok: false, error: 'Email veya şifre hatalı' };
+  if (!user) return { ok: false, error: 'Email ose fjalëkalim i gabuar' };
+  if (!bcrypt.compareSync(password, user.password_hash)) return { ok: false, error: 'Email ose fjalëkalim i gabuar' };
 
   const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: JWT_EXPIRY });
   return {
@@ -76,8 +76,8 @@ function requireAuth(req, res, next) {
 }
 
 function requireAdmin(req, res, next) {
-  if (!req.user) return res.status(401).json({ ok: false, error: 'Giriş gerekli' });
-  if (!req.user.is_admin) return res.status(403).json({ ok: false, error: 'Yetkisiz' });
+  if (!req.user) return res.status(401).json({ ok: false, error: 'Kërkohet hyrje' });
+  if (!req.user.is_admin) return res.status(403).json({ ok: false, error: 'I paautorizuar' });
   next();
 }
 

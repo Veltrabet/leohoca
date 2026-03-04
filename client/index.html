@@ -3,7 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#ffffff">
+  <meta name="theme-color" content="#1e40af">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="LEOGPT">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
   <meta name="description" content="LeoGPT - AI Asistan. © Leohoca — Të gjitha të drejtat e rezervuara.">
   <meta name="author" content="Leohoca">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -11,16 +15,24 @@
   <meta http-equiv="Expires" content="0">
   <title>LeoGPT</title>
   <link rel="manifest" href="manifest.json?v=2.0">
-  <link rel="stylesheet" href="styles.css?v=2.0">
+  <link rel="stylesheet" href="styles.css?v=2.1">
   <script src="config.js?v=2.0"></script>
 </head>
 <body class="theme-light">
+  <!-- PWA Splash: Logo + LEOGPT (telefonlarda "Ana ekrana ekle" ile açıldığında) -->
+  <div id="pwaSplash" class="pwa-splash" aria-hidden="false">
+    <img src="/logo.png" alt="LeoGPT" class="pwa-splash-logo" onerror="this.style.display='none'; document.getElementById('pwaSplashFallback').style.display='flex';" />
+    <div id="pwaSplashFallback" class="pwa-splash-fallback" style="display:none">L</div>
+    <h1 class="pwa-splash-title">LEOGPT</h1>
+  </div>
+
   <!-- App password overlay -->
   <div id="passwordOverlay" class="overlay" style="display:none">
     <div class="overlay-box glass">
       <h2>LeoGPT</h2>
       <p id="passwordPrompt">Vendosni fjalëkalimin për akses</p>
-      <input type="password" id="passwordInput" placeholder="Fjalëkalimi" autocomplete="off" />
+      <label for="passwordInput" class="sr-only">Fjalëkalimi</label>
+      <input type="password" id="passwordInput" placeholder="Fjalëkalimi" autocomplete="off" aria-label="Fjalëkalimi" />
       <p class="error-msg" id="passwordError"></p>
       <button id="passwordSubmit" class="btn-primary">Hyr</button>
     </div>
@@ -32,15 +44,20 @@
       <h2>LeoGPT</h2>
       <p id="loginOverlayMsg">Hyni ose regjistrohuni</p>
       <div id="loginForm">
-        <input type="email" id="loginEmail" placeholder="Email" />
-        <input type="password" id="loginPassword" placeholder="Fjalëkalimi" />
+        <label for="loginEmail" class="sr-only">Email</label>
+        <input type="email" id="loginEmail" placeholder="Email" aria-label="Email" />
+        <label for="loginPassword" class="sr-only">Fjalëkalimi</label>
+        <input type="password" id="loginPassword" placeholder="Fjalëkalimi" aria-label="Fjalëkalimi" />
         <button id="loginSubmit" class="btn-primary">Hyr</button>
         <p class="error-msg" id="loginError"></p>
       </div>
       <div id="registerForm" style="display:none">
-        <input type="text" id="regName" placeholder="Emri (opsional)" />
-        <input type="email" id="regEmail" placeholder="Email" />
-        <input type="password" id="regPassword" placeholder="Fjalëkalimi (min 6 karaktere)" />
+        <label for="regName" class="sr-only">Emri</label>
+        <input type="text" id="regName" placeholder="Emri (opsional)" aria-label="Emri" />
+        <label for="regEmail" class="sr-only">Email</label>
+        <input type="email" id="regEmail" placeholder="Email" aria-label="Email" />
+        <label for="regPassword" class="sr-only">Fjalëkalimi</label>
+        <input type="password" id="regPassword" placeholder="Fjalëkalimi (min 6 karaktere)" aria-label="Fjalëkalimi" />
         <button id="regSubmit" class="btn-primary">Regjistrohu</button>
         <p class="error-msg" id="regError"></p>
       </div>
@@ -55,19 +72,32 @@
     <div class="overlay-box glass">
       <h2>LeoGPT — Konfigurim</h2>
       <p>URL e backend-it kërkohet.</p>
-      <input type="url" id="backendUrl" placeholder="https://xxx.up.railway.app" />
+      <label for="backendUrl" class="sr-only">URL e backend-it</label>
+      <input type="url" id="backendUrl" placeholder="https://xxx.up.railway.app" aria-label="URL e backend-it" />
       <button id="saveBackend" class="btn-primary">Ruaj</button>
     </div>
   </div>
 
   <!-- Main App -->
   <div class="app-layout" id="mainApp" style="display:none">
+    <!-- Voice mode overlay: sadece logo yuvarlak içinde (dinleme/konuşma) -->
+    <div class="voice-mode-overlay" id="voiceModeOverlay" aria-hidden="true">
+      <div class="voice-mode-circle">
+        <img id="voiceModeLogo" class="voice-mode-logo" src="/logo.png" alt="LeoGPT" />
+        <div class="voice-mode-fallback" id="voiceModeLogoFallback" style="display:none">L</div>
+      </div>
+      <p class="voice-mode-hint" id="voiceModeHint">Po dëgjoj... Fol.</p>
+    </div>
+
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
         <img id="appLogo" class="sidebar-logo" src="/logo.png" alt="LeoGPT" />
         <div class="logo-fallback" id="logoFallback" style="display:none">L</div>
-        <h1 class="sidebar-title">LeoGPT</h1>
+        <div class="sidebar-brand">
+          <h1 class="sidebar-title">LeoGPT</h1>
+          <span class="sidebar-badge">Premium AI</span>
+        </div>
       </div>
       <nav class="sidebar-nav">
         <button class="nav-item nav-item-primary" id="newChatBtn" data-action="new-chat">
@@ -94,6 +124,10 @@
           <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg></span>
           <span class="nav-label" data-i18n="projects">Projektet</span>
         </button>
+        <button class="nav-item" id="projectGeneratorBtn" data-action="project-generator">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg></span>
+          <span class="nav-label">🧠 Projekt Generator</span>
+        </button>
       </nav>
       <div class="chat-history" id="chatHistory">
         <div class="history-placeholder" id="historyPlaceholder">Sesioni aktual</div>
@@ -103,45 +137,45 @@
           <button class="sidebar-btn voice-toggle" id="voiceToggle" title="Zë">
             <span class="icon">🔊</span>
           </button>
-          <button class="sidebar-btn voice-settings-btn" id="voiceSettingsBtn" title="Ses ayarları">⚙️</button>
+          <button class="sidebar-btn voice-settings-btn" id="voiceSettingsBtn" title="Cilësimet e zërit">⚙️</button>
           <a href="admin.html" class="sidebar-btn admin-link" id="adminLink" style="display:none">Admin</a>
         </div>
         <div class="voice-settings-popover" id="voiceSettingsPopover" style="display:none">
           <div class="voice-setting-row">
-            <label data-i18n="voiceType">Ses tipi</label>
+            <label data-i18n="voiceType">Lloji i zërit</label>
             <select id="voiceGenderSelect">
-              <option value="female" data-i18n="voiceFemale">Kadın</option>
-              <option value="male" data-i18n="voiceMale">Erkek</option>
-              <option value="auto" data-i18n="voiceAuto">Otomatik</option>
+              <option value="female" data-i18n="voiceFemale">Femër</option>
+              <option value="male" data-i18n="voiceMale">Mashkull</option>
+              <option value="auto" data-i18n="voiceAuto">Automatik</option>
             </select>
           </div>
           <div class="voice-setting-row voice-setting-toggle">
-            <label data-i18n="voiceUsePro">Pro ses profili</label>
+            <label data-i18n="voiceUsePro">Profili profesional i zërit</label>
             <input type="checkbox" id="voiceUseProCheck" checked />
           </div>
           <div class="voice-setting-row">
-            <label data-i18n="voiceEmotion">Ton / Duygu</label>
+            <label data-i18n="voiceEmotion">Toni / Emocioni</label>
             <select id="voiceEmotionSelect">
-              <option value="friendly" data-i18n="emotionFriendly">Samimi</option>
-              <option value="professional" data-i18n="emotionProfessional">Ciddi</option>
-              <option value="teacher" data-i18n="emotionTeacher">Öğretici</option>
-              <option value="energetic" data-i18n="emotionEnergetic">Enerjik</option>
-              <option value="calm" data-i18n="emotionCalm">Sakin</option>
+              <option value="friendly" data-i18n="emotionFriendly">Miqësor</option>
+              <option value="professional" data-i18n="emotionProfessional">Profesional</option>
+              <option value="teacher" data-i18n="emotionTeacher">Mësues</option>
+              <option value="energetic" data-i18n="emotionEnergetic">Energjik</option>
+              <option value="calm" data-i18n="emotionCalm">Qetë</option>
             </select>
           </div>
           <div class="voice-setting-row">
-            <label data-i18n="voiceSelect">Ses seç</label>
+            <label data-i18n="voiceSelect">Zgjidhni zërin</label>
             <select id="voiceSelect">
-              <option value="">— Otomatik —</option>
+              <option value="">— Automatik —</option>
             </select>
           </div>
           <div class="voice-setting-row">
-            <label data-i18n="voiceSpeed">Ses hızı</label>
+            <label data-i18n="voiceSpeed">Shpejtësia e zërit</label>
             <input type="range" id="voiceRateSlider" min="0.7" max="1.2" step="0.05" value="0.9" />
             <span id="voiceRateValue">0.9</span>
           </div>
           <div class="voice-setting-row">
-            <label data-i18n="voicePitch">Ses tonu (pitch)</label>
+            <label data-i18n="voicePitch">Toni i zërit</label>
             <input type="range" id="voicePitchSlider" min="0.8" max="1.4" step="0.1" value="1" />
             <span id="voicePitchValue">1.0</span>
           </div>
@@ -164,7 +198,7 @@
         </div>
         <div class="header-right">
           <span id="userBadge" style="display:none; font-size:0.85rem; margin-right:0.5rem; color:var(--text-secondary)"></span>
-          <button class="icon-btn" id="logoutBtn" style="display:none" title="Çıkış">Çıkış</button>
+          <button class="icon-btn" id="logoutBtn" style="display:none" title="Dil">Dil</button>
           <button class="icon-btn theme-toggle" id="themeToggle" aria-label="Tema">
             <span class="theme-icon">🌙</span>
           </button>
@@ -193,8 +227,8 @@
           </div>
           <div class="empty-state" id="emptyState">
             <div class="empty-icon">💬</div>
-            <p class="empty-title">Chat with LeoGPT</p>
-            <p class="empty-desc">Write in any language — I'll respond in the same language</p>
+            <p class="empty-title">Bisedoni me LeoGPT</p>
+            <p class="empty-desc">Shkruani — përgjigjem në shqip</p>
             <div class="suggestions" id="suggestions"></div>
           </div>
           <button class="scroll-to-bottom" id="scrollToBottom" aria-label="Scroll to bottom" style="display:none">↓</button>
@@ -207,7 +241,8 @@
         <div class="input-area">
           <div class="input-row glass">
             <input type="file" id="imageInput" accept="image/*" style="display:none" />
-            <input type="text" id="textInput" placeholder="Type your message in any language..." autocomplete="off" />
+            <label for="textInput" class="sr-only">Mesazhi</label>
+            <input type="text" id="textInput" placeholder="Shkruani mesazhin tuaj..." autocomplete="off" aria-label="Shkruani mesazhin tuaj" />
             <button class="img-btn" id="imgBtn" aria-label="Imazh" title="Ngjitni imazh">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
             </button>
@@ -218,7 +253,7 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
             </button>
           </div>
-          <p class="hint" id="hint">Write in any language — I'll respond in the same language</p>
+          <p class="hint" id="hint">Shkruani — përgjigjem në shqip</p>
         </div>
       </main>
     </div>
@@ -233,7 +268,8 @@
           <h3 data-i18n="searchChats">Kërko bisedat</h3>
           <button class="panel-close" id="searchClose" aria-label="Close">×</button>
         </div>
-        <input type="text" class="panel-input" id="searchInput" placeholder="" />
+        <label for="searchInput" class="sr-only">Kërko në mesazhe</label>
+        <input type="text" class="panel-input" id="searchInput" placeholder="" aria-label="Kërko në mesazhe" />
         <div class="search-results" id="searchResults"></div>
       </div>
     </div>
@@ -260,9 +296,36 @@
         <div class="projects-list" id="projectsList"></div>
       </div>
     </div>
+
+    <!-- AI Project Generator overlay -->
+    <div class="panel-overlay" id="projectGeneratorOverlay">
+      <div class="panel project-generator-panel">
+        <div class="panel-header">
+          <h3>🧠 AI Projekt Generator</h3>
+          <button class="panel-close" id="projectGeneratorClose" aria-label="Close">×</button>
+        </div>
+        <div class="project-gen-content">
+          <p class="project-gen-desc">1️⃣ Ngarko PDF (specifikim, plan, kërkesa) → 2️⃣ LeoGPT analizon → 3️⃣ Gjeneron proje → 4️⃣ Shkarko ZIP</p>
+          <form id="projectGenForm" class="project-gen-form">
+            <label class="project-gen-label" for="projectPdfInput">
+              <input type="file" id="projectPdfInput" accept="application/pdf" required aria-label="Zgjidhni skedar PDF" />
+              <span class="project-gen-file-btn">Zgjidh PDF</span>
+              <span class="project-gen-filename" id="projectPdfFilename"></span>
+            </label>
+            <button type="submit" class="btn btn-primary project-gen-submit" id="projectGenSubmit">
+              Gjenero projektin
+            </button>
+          </form>
+          <div class="project-gen-status" id="projectGenStatus"></div>
+          <div class="project-gen-download" id="projectGenDownload" style="display:none">
+            <a id="projectGenDownloadLink" class="btn btn-success" download>⬇ Shkarko ZIP</a>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="protect.js?v=2.0"></script>
-  <script src="app.js?v=2.0"></script>
+  <script src="app.js?v=2.1"></script>
 </body>
 </html>

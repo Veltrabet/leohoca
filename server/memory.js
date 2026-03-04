@@ -68,7 +68,7 @@ function getDetectedLanguage(sessionId) {
 
 function setPreferredLanguage(sessionId, lang) {
   const session = getOrCreateSession(sessionId);
-  session.preferredLanguage = (lang === 'sq-AL' || lang === 'tr-TR') ? lang : 'sq-AL';
+  session.preferredLanguage = lang === 'sq-AL' ? lang : 'sq-AL';
   return session;
 }
 

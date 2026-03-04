@@ -1,5 +1,5 @@
 /**
- * LeoGPT - SQLite veritabanı
+ * LeoGPT - Bazë e të dhënave SQLite
  */
 
 const Database = require('better-sqlite3');
@@ -84,7 +84,7 @@ function initAdmin() {
   db.prepare('INSERT INTO users (email, password_hash, name, is_admin) VALUES (?, ?, ?, 1)')
     .run(adminEmail, hash, 'Admin');
   db.prepare('INSERT OR IGNORE INTO allowed_emails (email) VALUES (?)').run(adminEmail);
-  console.log('Admin hesabı oluşturuldu:', adminEmail);
+  console.log('Llogaria admin u krijua:', adminEmail);
 }
 
 function initDefaultSettings() {

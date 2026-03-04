@@ -1,6 +1,6 @@
 # LeoGPT — AI Asistent me Zë dhe Bisedë
 
-Asistent AI në kohë reale që mbështet **Shqip (sq-AL)** dhe **Türkçe (tr-TR)**. LeoGPT ndihmon me zhvillim softueri, planifikim projektesh, ide biznesi dhe **statistika Instagram/Meta**.
+Asistent AI në kohë reale vetëm në **Shqip (sq-AL)**. LeoGPT ndihmon me zhvillim softueri, planifikim projektesh, ide biznesi dhe **statistika Instagram/Meta**.
 
 **Deploy falas** — Railway/Render me një klik.
 
@@ -11,7 +11,7 @@ Asistent AI në kohë reale që mbështet **Shqip (sq-AL)** dhe **Türkçe (tr-T
 - **Tekst → Zë**: Zë natyror
 - **WebSocket**: Komunikim në kohë reale
 - **Ndërprerje**: Foli kurdo — AI ndalon
-- **Shqip + Türkçe**: Gjuha parazgjedhur Shqip; Türkçe vetëm kur përdoruesi kërkon
+- **Shqip**: Vetëm gjuha shqipe
 - **Instagram/Meta**: Statistika nga Meta Business, njoftim gabimesh reklamash
 - **PWA**: Instalo në telefon si aplikacion
 
@@ -57,57 +57,57 @@ Asistent AI në kohë reale që mbështet **Shqip (sq-AL)** dhe **Türkçe (tr-T
 
 ---
 
-## Hostinger ile Kullanım
+## Përdorim me Hostinger
 
-Hostinger paylaşımlı hosting Node.js desteklemez. **Çözüm:** Frontend Hostinger'da, backend Railway'de (ücretsiz).
+Hostinger shared hosting nuk mbështet Node.js. **Zgjidhje:** Frontend në Hostinger, backend në Railway (falas).
 
-### Adım 1: Backend'i Railway'e deploy edin
+### Hapi 1: Deploy backend në Railway
 
-1. Bu projeyi GitHub'a push edin
+1. Push këtë projekt në GitHub
 2. Railway.app → New Project → Deploy from GitHub
-3. Variables → `GROQ_API_KEY` ekleyin
-4. Settings → Generate Domain → URL alın (örn: `https://leohoca.up.railway.app`)
+3. Variables → shtoni `GROQ_API_KEY`
+4. Settings → Generate Domain → merrni URL (p.sh. `https://leohoca.up.railway.app`)
 
-### Adım 2: Frontend'i Hostinger'a yükleyin
+### Hapi 2: Ngarkoni frontend në Hostinger
 
-1. `client` klasöründeki tüm dosyaları Hostinger File Manager veya FTP ile yükleyin:
+1. Ngarkoni të gjitha skedarët nga `client` me File Manager ose FTP:
    - index.html, config.js, app.js, styles.css
    - manifest.json, sw.js
-   - icons/ klasörü (icon-192.png, icon-512.png, icon.svg)
+   - icons/ (icon-192.png, icon-512.png, icon.svg)
 
-2. **config.js** dosyasını düzenleyin:
+2. Ndryshoni **config.js**:
    ```javascript
-   var LEOHOCA_BACKEND = 'https://SIZIN-RAILWAY-URL.up.railway.app';
+   var LEOHOCA_BACKEND = 'https://URL-JUAJ-RAILWAY.up.railway.app';
    ```
-   (Railway'den aldığınız URL'yi yazın)
+   (Vendosni URL nga Railway)
 
-3. `public_html` veya sitenizin ana dizinine yükleyin
+3. Ngarkoni në `public_html` ose drejtorinë kryesore të faqes
 
-### Adım 3: Domain ayarı
+### Hapi 3: Cilësim domain
 
-- Hostinger'da domain'iniz zaten ayarlıysa (örn: leohoca.com), dosyalar yüklendiğinde otomatik çalışır
-- Subdomain kullanmak isterseniz (örn: ai.siteniz.com), Hostinger'da subdomain oluşturup dosyaları o klasöre yükleyin
+- Nëse domaini është tashmë i konfiguruar (p.sh. leohoca.com), funksionon automatikisht
+- Për subdomain (p.sh. ai.faqajua.com), krijoni subdomain në Hostinger dhe ngarkoni atje
 
-### Özet
+### Përmbledhje
 
-| Bileşen | Nerede | Maliyet |
-|---------|--------|---------|
-| Frontend (HTML, JS, CSS) | Hostinger | Mevcut hosting |
-| Backend (Node.js, AI) | Railway | Ücretsiz |
-| AI (Groq) | Groq Cloud | Ücretsiz |
+| Komponent | Ku | Kosto |
+|-----------|-----|-------|
+| Frontend (HTML, JS, CSS) | Hostinger | Hosting ekzistues |
+| Backend (Node.js, AI) | Railway | Falas |
+| AI (Groq) | Groq Cloud | Falas |
 
 ---
 
-## Yerel Kullanım (Ollama)
+## Përdorim lokale (Ollama)
 
-### 1. Ollama kur (sadece kendi bilgisayarınız için)
+### 1. Instaloni Ollama (vetëm për kompjuterin tuaj)
 
 ```bash
-# https://ollama.com indir, kur
+# Shkarkoni nga https://ollama.com
 ollama pull llama3.2
 ```
 
-### 2. Server başlat
+### 2. Nisni serverin
 
 ```bash
 cd server
@@ -115,19 +115,19 @@ npm install
 npm start
 ```
 
-### 3. Tarayıcıda aç
+### 3. Hapni në shfletues
 
 **http://localhost:3100**
 
-**Chrome** kullanın.
+Përdorni **Chrome**.
 
-## Telefonda Kullanım
+## Përdorim në telefon
 
-1. Bilgisayarda server'ı çalıştırın: `cd server && npm start`
-2. Telefon ve bilgisayar **aynı WiFi** ağında olmalı
-3. Bilgisayarda tarayıcıda açtığınızda sayfanın altında "📱 Telefon: http://..." linki görünür
-4. Bu adresi telefonun tarayıcısına yazın veya linke tıklayın
-5. PWA olarak "Ana ekrana ekle" ile uygulama gibi kullanabilirsiniz
+1. Nisni serverin në kompjuter: `cd server && npm start`
+2. Telefoni dhe kompjuteri duhet të jenë në të njëjtën WiFi
+3. Kur hapni në shfletues, në fund të faqes shfaqet "📱 Telefon: http://..."
+4. Shkruani këtë adresë në shfletuesin e telefonit ose klikoni linkun
+5. Si PWA "Shto në ekran kryesor" përdoret si aplikacion
 
 ## PWA Installation
 
@@ -135,12 +135,11 @@ npm start
 2. Tap the browser menu → **Add to Home Screen** or **Install app**
 3. LeoHoca will appear on your home screen and run like a native app
 
-## Usage
+## Përdorim
 
-1. **Select language**: Tap TR (Turkish) or SQ (Albanian)
-2. **Tap the microphone** button and speak
-3. LeoHoca will transcribe, send to AI, and speak the response
-4. **Interrupt anytime**: Tap mic again or start speaking—AI stops
+1. **Shtypni mikrofonin** dhe folni
+2. LeoHoca transkribon, dërgon te AI dhe lexon përgjigjen
+3. **Ndërpritni kurdo**: Shtypni mikrofonin përsëri ose filloni të flisni — AI ndalon
 
 ## Safety
 
