@@ -7,19 +7,20 @@ Asistent AI në kohë reale vetëm në **Shqip (sq-AL)**. LeoGPT ndihmon me zhvi
 ## Veçoritë
 
 - **Zë → Tekst**: Mikrofon me Web Speech API
-- **Bisedë AI**: Përgjigje në rrjedhë (Groq/Gemini/Ollama)
+- **Bisedë AI**: Përgjigje në rrjedhë (Groq/Ollama — 100% falas)
 - **Tekst → Zë**: Zë natyror
 - **WebSocket**: Komunikim në kohë reale
 - **Ndërprerje**: Foli kurdo — AI ndalon
 - **Shqip**: Vetëm gjuha shqipe
 - **Instagram/Meta**: Statistika nga Meta Business, njoftim gabimesh reklamash
 - **PWA**: Instalo në telefon si aplikacion
+- **Gjenerim imazhesh**: Stable Diffusion / Fooocus (falas, API lokale)
 
 ## Stack
 
 - **Backend**: Node.js, Express, WebSocket
 - **Frontend**: HTML, JavaScript, Bootstrap 5 (admin)
-- **AI**: Groq (falas) | Gemini (falas) | Ollama (lokale)
+- **AI**: Groq (falas) | Ollama (lokale) — 0 maliyet
 
 ## Projektet
 
@@ -27,7 +28,7 @@ Asistent AI në kohë reale vetëm në **Shqip (sq-AL)**. LeoGPT ndihmon me zhvi
 ├── server/
 │   ├── config/           # persona, voice
 │   ├── index.js          # Express + WebSocket
-│   ├── ai.js             # Groq/Gemini/Ollama
+│   ├── ai.js             # Groq / Ollama (falas)
 │   ├── instagram.js      # Meta/Instagram API
 │   ├── .env.example      # Shembull variablash
 │   └── .env              # Variabla (mos e ngarkoni në GitHub!)
@@ -144,6 +145,35 @@ Përdorni **Chrome**.
 ## Safety
 
 LeoHoca refuses illegal, harmful, hacking, fraud, violence, or dangerous instructions. If asked for illegal content, it politely declines and suggests legal alternatives.
+
+## Gjenerim imazhesh (100% falas)
+
+LeoGPT mbështet **Stable Diffusion** dhe **Fooocus** — të dyja falas, API, pa kufizime.
+
+| Backend | Përshkrim | Port |
+|---------|-----------|------|
+| **AUTOMATIC1111** | Stable Diffusion WebUI — më i fuqishëm | 7860 |
+| **Fooocus** | Më i lehtë për instalim, cilësi të lartë | 7865 |
+
+### Kurimi
+
+1. Instaloni njërin:
+   - **Stable Diffusion**: [AUTOMATIC1111 WebUI](https://github.com/AUTOMATIC1111/stable-diffusion-webui)
+   - **Fooocus**: [Fooocus](https://github.com/lllyasviel/Fooocus)
+
+2. Shtoni në `.env`:
+   ```
+   # Stable Diffusion (AUTOMATIC1111)
+   IMAGE_GEN_URL=http://localhost:7860
+
+   # OSE Fooocus
+   IMAGE_GEN_URL=http://localhost:7865
+   IMAGE_GEN_BACKEND=fooocus
+   ```
+
+3. Në chat shkruani: *"Krijo një imazh të një peizazhi"* — LeoGPT gjeneron automatikisht.
+
+**Avantazhe:** Falas, API lokale, pa kufizime.
 
 ## Configuration
 

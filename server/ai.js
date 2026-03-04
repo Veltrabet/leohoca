@@ -1,61 +1,36 @@
 /**
  * ═══════════════════════════════════════════════════════════════════════════
- * LeoGPT — AI Integration (Premium)
+ * LeoGPT — AI Integration (100% FALAS — 0 maliyet)
  * ═══════════════════════════════════════════════════════════════════════════
  *
- * INDEX:
- * ─────────────────────────────────────────────────────────────────────────
- * 1. INIT           — initAI, provider selection (Groq/Gemini/OpenAI/Ollama)
- * 2. BUILD          — buildMessages, persona, instagramContext, lang rules
- * 3. DETECT         — detectLanguage
- * 4. STREAM         — streamWithGroq, streamWithGemini, streamWithOllama, streamWithOpenAI
- * 5. CHAT           — streamChat
- * 6. GREETING       — getGreeting
- * ─────────────────────────────────────────────────────────────────────────
+ * Vetëm provajues falas: Groq | Ollama (lokale)
+ * Gemini dhe OpenAI nuk përdoren (me pagesë).
  *
- * Re: Groq (falas) | Gemini (falas) | OpenAI (me pagesë) | Ollama (lokale)
+ * Groq: https://console.groq.com — API key falas
+ * Ollama: https://ollama.ai — lokale, pa API key
  */
 
 const { getConversationHistory, addMessage, setDetectedLanguage, getDetectedLanguage, getPreferredLanguage, setPreferredLanguage } = require('./memory');
 const persona = require('./config/persona.json');
 
-let aiProvider = null; // 'groq' | 'gemini' | 'openai' | 'ollama'
+let aiProvider = null; // 'groq' | 'ollama'
 let groqClient = null;
-let openaiClient = null;
-let geminiClient = null;
 
 const OLLAMA_URL = process.env.OLLAMA_URL || 'http://localhost:11434';
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'llama3.2';
 const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+const GROQ_VISION_MODEL = process.env.GROQ_VISION_MODEL || 'llama-3.2-11b-vision-preview';
 
 function initAI() {
   if (process.env.GROQ_API_KEY) {
     const Groq = require('groq-sdk');
     groqClient = new Groq({ apiKey: process.env.GROQ_API_KEY });
     aiProvider = 'groq';
-    console.log('AI: Groq po përdoret (falas, re) -', GROQ_MODEL);
-    return true;
-  }
-  if (process.env.GEMINI_API_KEY) {
-    try {
-      const { GoogleGenerativeAI } = require('@google/generative-ai');
-      geminiClient = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-      aiProvider = 'gemini';
-      console.log('AI: Google Gemini po përdoret (falas, re)');
-      return true;
-    } catch (e) {
-      console.warn('Paketi Gemini nuk është, përdorni Groq: npm install @google/generative-ai');
-    }
-  }
-  if (process.env.OPENAI_API_KEY) {
-    const OpenAI = require('openai');
-    openaiClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-    aiProvider = 'openai';
-    console.log('AI: OpenAI po përdoret');
+    console.log('AI: Groq (falas, 0 maliyet) -', GROQ_MODEL);
     return true;
   }
   aiProvider = 'ollama';
-  console.log('AI: Ollama po përdoret (lokale) -', OLLAMA_MODEL);
+  console.log('AI: Ollama (lokale, falas) -', OLLAMA_MODEL);
   return true;
 }
 
@@ -139,11 +114,27 @@ function detectLanguage(text) {
   return 'sq-AL';
 }
 
+function toGroqMessages(messages) {
+  return messages.map((m) => {
+    if (m.role === 'user' && m.image) {
+      const parts = [{ type: 'text', text: m.content || 'Çfarë shihni në këtë imazh?' }];
+      parts.push({
+        type: 'image_url',
+        image_url: { url: `data:${m.image.mimeType || 'image/jpeg'};base64,${m.image.base64}` }
+      });
+      return { role: 'user', content: parts };
+    }
+    return { role: m.role, content: m.content };
+  });
+}
+
 async function streamWithGroq(messages, onChunk, onComplete) {
   try {
-    const groqMessages = messages.map((m) => ({ role: m.role, content: m.content }));
+    const groqMessages = toGroqMessages(messages);
+    const hasImage = messages.some((m) => m.image);
+    const model = hasImage ? GROQ_VISION_MODEL : GROQ_MODEL;
     const stream = await groqClient.chat.completions.create({
-      model: GROQ_MODEL,
+      model,
       messages: groqMessages,
       stream: true,
       max_tokens: 1024,
@@ -161,48 +152,6 @@ async function streamWithGroq(messages, onChunk, onComplete) {
   } catch (error) {
     console.error('Groq Error:', error);
     onChunk(error.message || 'Gabim Groq. Kontrolloni API key.');
-    onComplete('');
-  }
-}
-
-async function streamWithGemini(messages, onChunk, onComplete) {
-  try {
-    const model = geminiClient.getGenerativeModel({
-      model: 'gemini-1.5-flash',
-      systemInstruction: messages.find((m) => m.role === 'system')?.content,
-      generationConfig: { temperature: 0.4, maxOutputTokens: 1024 }
-    });
-    const chatHistory = messages.filter((m) => m.role !== 'system');
-    const lastMsg = chatHistory.pop();
-    const history = chatHistory.map((m) => ({
-      role: m.role === 'user' ? 'user' : 'model',
-      parts: [{ text: m.content }]
-    }));
-
-    let lastParts;
-    if (lastMsg.image) {
-      lastParts = [
-        { text: lastMsg.content || 'Çfarë shihni në këtë imazh?' },
-        { inlineData: { mimeType: lastMsg.image.mimeType || 'image/jpeg', data: lastMsg.image.base64 } }
-      ];
-    } else {
-      lastParts = [{ text: lastMsg.content }];
-    }
-
-    const chat = model.startChat({ history });
-    const result = await chat.sendMessageStream(lastParts);
-    let fullResponse = '';
-    for await (const chunk of result.stream) {
-      const text = chunk.text && chunk.text();
-      if (text) {
-        fullResponse += text;
-        onChunk(text);
-      }
-    }
-    onComplete(fullResponse);
-  } catch (error) {
-    console.error('Gemini Error:', error);
-    onChunk(error.message || 'Gabim Gemini.');
     onComplete('');
   }
 }
@@ -249,39 +198,6 @@ async function streamWithOllama(messages, onChunk, onComplete) {
   }
 }
 
-async function streamWithOpenAI(messages, onChunk, onComplete) {
-  try {
-    const openAIMessages = messages.map((m) => {
-      if (m.role === 'user' && m.image) {
-        const parts = [{ type: 'text', text: m.content || 'What is in this image?' }];
-        parts.push({ type: 'image_url', image_url: { url: `data:${m.image.mimeType};base64,${m.image.base64}` } });
-        return { role: 'user', content: parts };
-      }
-      return { role: m.role, content: m.content };
-    });
-    const stream = await openaiClient.chat.completions.create({
-      model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
-      messages: openAIMessages,
-      stream: true,
-      max_tokens: 1024,
-      temperature: 0.4
-    });
-    let fullResponse = '';
-    for await (const chunk of stream) {
-      const content = chunk.choices[0]?.delta?.content;
-      if (content) {
-        fullResponse += content;
-        onChunk(content);
-      }
-    }
-    onComplete(fullResponse);
-  } catch (error) {
-    console.error('OpenAI Error:', error);
-    onChunk(error.message || 'Ndodhi një gabim.');
-    onComplete('');
-  }
-}
-
 async function streamChat(sessionId, userMessage, imageData, onChunk, onComplete, instagramContext) {
   const t = (userMessage || '').toLowerCase();
   if (/\b(shqip|arnavutça|arnavutca)\s*(fol|përgjigju|shkruaj)/i.test(t) || /\b(fol\s*shqip|përgjigju\s*në\s*shqip)/i.test(t)) {
@@ -298,22 +214,18 @@ async function streamChat(sessionId, userMessage, imageData, onChunk, onComplete
     onComplete(full);
   };
 
-  if (imageData && aiProvider !== 'gemini' && aiProvider !== 'openai') {
-    onChunk('Images require GEMINI_API_KEY or OPENAI_API_KEY.');
+  if (imageData && aiProvider === 'ollama') {
+    onChunk('Analiza e imazheve kërkon Groq. Shtoni GROQ_API_KEY në .env (falas: console.groq.com)');
     onComplete('');
     return;
   }
 
   if (aiProvider === 'groq') {
     await streamWithGroq(messages, onChunk, done);
-  } else if (aiProvider === 'gemini') {
-    await streamWithGemini(messages, onChunk, done);
-  } else if (aiProvider === 'openai') {
-    await streamWithOpenAI(messages, onChunk, done);
   } else if (aiProvider === 'ollama') {
     await streamWithOllama(messages, onChunk, done);
   } else {
-    onChunk('AI nuk është konfiguruar. Shtoni GROQ_API_KEY ose GEMINI_API_KEY.');
+    onChunk('AI nuk është konfiguruar. Shtoni GROQ_API_KEY (falas) ose instaloni Ollama (lokale).');
     onComplete('');
   }
 }
@@ -337,27 +249,6 @@ async function complete(messages, maxTokens = 8192) {
     });
     return res.choices?.[0]?.message?.content || '';
   }
-  if (aiProvider === 'gemini' && geminiClient) {
-    const model = geminiClient.getGenerativeModel({
-      model: 'gemini-1.5-flash',
-      systemInstruction: messages.find((m) => m.role === 'system')?.content,
-      generationConfig: { temperature: 0.3, maxOutputTokens: maxTokens }
-    });
-    const lastUser = messages.filter((m) => m.role === 'user').pop();
-    const result = await model.generateContent(lastUser?.content || '');
-    const response = result.response;
-    return response?.text?.() || '';
-  }
-  if (aiProvider === 'openai' && openaiClient) {
-    const res = await openaiClient.chat.completions.create({
-      model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
-      messages: simpleMessages,
-      stream: false,
-      max_tokens: maxTokens,
-      temperature: 0.3
-    });
-    return res.choices?.[0]?.message?.content || '';
-  }
   if (aiProvider === 'ollama') {
     const res = await fetch(`${OLLAMA_URL}/api/chat`, {
       method: 'POST',
@@ -368,7 +259,7 @@ async function complete(messages, maxTokens = 8192) {
     const data = await res.json();
     return data.message?.content || '';
   }
-  throw new Error('AI nuk është konfiguruar.');
+  throw new Error('AI nuk është konfiguruar. Shtoni GROQ_API_KEY ose Ollama.');
 }
 
 module.exports = {
