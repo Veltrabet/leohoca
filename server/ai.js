@@ -117,10 +117,18 @@ function detectLanguage(text) {
 function toGroqMessages(messages) {
   return messages.map((m) => {
     if (m.role === 'user' && m.image) {
+      // Base64'i temizle (boşluk, yeni satır kaldır)
+      let base64 = (m.image.base64 || '').trim().replace(/\s+/g, '');
+      // Eğer zaten data: prefix'i varsa kaldır
+      if (base64.startsWith('data:')) {
+        const commaIdx = base64.indexOf(',');
+        if (commaIdx > 0) base64 = base64.slice(commaIdx + 1);
+      }
+      const mimeType = m.image.mimeType || 'image/jpeg';
       const parts = [{ type: 'text', text: m.content || 'Çfarë shihni në këtë imazh?' }];
       parts.push({
         type: 'image_url',
-        image_url: { url: `data:${m.image.mimeType || 'image/jpeg'};base64,${m.image.base64}` }
+        image_url: { url: `data:${mimeType};base64,${base64}` }
       });
       return { role: 'user', content: parts };
     }
